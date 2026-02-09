@@ -3,7 +3,7 @@
 An offline-first AI system that provides intelligent, explainable study recommendations to students based on performance data, syllabus structure, and exam weightage.
 
 ## 🎯 Overview
-
+ 
 This is **NOT** a chatbot tutor. This is a **decision intelligence engine** that answers:
 
 > "Given limited time, what topic should I study right now to maximize my exam score?"
