@@ -23,7 +23,7 @@ The system operates deterministically with full explainability, ensuring student
 - Exam weightage and estimated study time per topic
 
 ### 3. **Decision Intelligence Algorithm**
-Computes priority scores using:
+Computes priority scores using: 
 ```
 Priority Score = (Exam Weightage × Importance) / 
                  (Weakness Score × Dependency Factor × Mastery Level × Time Cost)
