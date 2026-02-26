@@ -113,3 +113,46 @@ def get_mastery_scores(
         }
         for m in mastery_records
     ]
+
+@router.get("/mastery/student/{student_id}/concept/{concept_id}")
+def get_concept_mastery(
+    student_id: int,
+    concept_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get mastery score for a specific concept"""
+    mastery = db.query(ConceptMastery).filter(
+        ConceptMastery.student_id == student_id,
+        ConceptMastery.concept_id == concept_id
+    ).first()
+    
+    if not mastery:
+        # Calculate mastery if not exists
+        tracker = PerformanceTracker(db)
+        mastery_score = tracker.calculate_mastery_score(student_id, concept_id)
+        
+        # Fetch the newly created record
+        mastery = db.query(ConceptMastery).filter(
+            ConceptMastery.student_id == student_id,
+            ConceptMastery.concept_id == concept_id
+        ).first()
+        
+        if not mastery:
+            return {
+                "concept_id": concept_id,
+                "mastery_score": 0.0,
+                "total_attempts": 0,
+                "accuracy": 0.0
+            }
+    
+    return {
+        "concept_id": mastery.concept_id,
+        "mastery_score": mastery.mastery_score,
+        "total_attempts": mastery.total_attempts,
+        "correct_attempts": mastery.correct_attempts,
+        "accuracy": (mastery.correct_attempts / mastery.total_attempts * 100) if mastery.total_attempts > 0 else 0,
+        "avg_time_seconds": mastery.avg_time_seconds,
+        "avg_confidence": mastery.avg_confidence,
+        "last_updated": mastery.last_updated
+    }

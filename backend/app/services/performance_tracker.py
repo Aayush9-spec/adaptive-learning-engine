@@ -2,7 +2,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from app.models.performance import QuestionAttempt, ConceptMastery
 from app.models.knowledge_graph import Question
-from typing import Dict, List
+from typing import Dict, List, Optional
+from datetime import datetime
 import statistics
 
 class PerformanceTracker:
@@ -10,6 +11,43 @@ class PerformanceTracker:
     
     def __init__(self, db: Session):
         self.db = db
+    
+    def record_attempt(
+        self,
+        student_id: int,
+        question_id: int,
+        answer: str,
+        is_correct: bool,
+        time_taken: float,
+        confidence: int
+    ) -> QuestionAttempt:
+        """
+        Record a question attempt with all provided fields.
+        
+        Args:
+            student_id: ID of the student
+            question_id: ID of the question
+            answer: Student's answer
+            is_correct: Whether the answer is correct
+            time_taken: Time taken in seconds
+            confidence: Confidence level (1-5)
+            
+        Returns:
+            The created QuestionAttempt record
+        """
+        attempt = QuestionAttempt(
+            student_id=student_id,
+            question_id=question_id,
+            answer=answer,
+            is_correct=is_correct,
+            time_taken_seconds=time_taken,
+            confidence=confidence,
+            timestamp=datetime.utcnow()
+        )
+        self.db.add(attempt)
+        self.db.commit()
+        self.db.refresh(attempt)
+        return attempt
     
     def calculate_mastery_score(self, student_id: int, concept_id: int) -> float:
         """
@@ -117,6 +155,69 @@ class PerformanceTracker:
             "correct_attempts": correct_attempts,
             "accuracy": accuracy,
             "average_mastery": avg_mastery
+        }
+    
+    def get_concept_attempts(self, student_id: int, concept_id: int) -> List[QuestionAttempt]:
+        """
+        Get all attempts for a specific concept by a student.
+        
+        Args:
+            student_id: ID of the student
+            concept_id: ID of the concept
+            
+        Returns:
+            List of QuestionAttempt records
+        """
+        attempts = self.db.query(QuestionAttempt).join(Question).filter(
+            QuestionAttempt.student_id == student_id,
+            Question.concept_id == concept_id
+        ).order_by(QuestionAttempt.timestamp).all()
+        
+        return attempts
+    
+    def get_mistake_patterns(self, student_id: int, concept_id: int) -> Dict:
+        """
+        Analyze mistake patterns for a concept.
+        
+        Args:
+            student_id: ID of the student
+            concept_id: ID of the concept
+            
+        Returns:
+            Dictionary containing mistake analysis
+        """
+        attempts = self.get_concept_attempts(student_id, concept_id)
+        
+        if not attempts:
+            return {
+                "concept_id": concept_id,
+                "total_attempts": 0,
+                "incorrect_attempts": 0,
+                "common_mistakes": [],
+                "mistake_rate": 0.0
+            }
+        
+        incorrect_attempts = [a for a in attempts if not a.is_correct]
+        
+        # Group incorrect answers
+        mistake_counts: Dict[str, int] = {}
+        for attempt in incorrect_attempts:
+            answer = attempt.answer.strip().lower()
+            mistake_counts[answer] = mistake_counts.get(answer, 0) + 1
+        
+        # Sort by frequency
+        common_mistakes = sorted(
+            [{"answer": ans, "count": cnt} for ans, cnt in mistake_counts.items()],
+            key=lambda x: x["count"],
+            reverse=True
+        )[:5]  # Top 5 common mistakes
+        
+        return {
+            "concept_id": concept_id,
+            "total_attempts": len(attempts),
+            "incorrect_attempts": len(incorrect_attempts),
+            "common_mistakes": common_mistakes,
+            "mistake_rate": len(incorrect_attempts) / len(attempts) if attempts else 0.0
         }
     
     def detect_learning_gaps(self, student_id: int, threshold: float = 40.0) -> List[Dict]:
