@@ -55,7 +55,14 @@ next-env.d.ts
 *.swp
 *.swo
 *~
+
+# macOS
 .DS_Store
+._*
+.AppleDouble
+.LSOverride
+.Spotlight-V100
+.Trashes
 
 # Docker
 docker-compose.override.yml

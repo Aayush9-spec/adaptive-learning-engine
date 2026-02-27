@@ -40,8 +40,8 @@ target_metadata = Base.metadata
 
 def get_url():
     """Get database URL from environment or config"""
-    # Use environment variable if available, otherwise use config
-    return os.getenv("DATABASE_URL", config.get_main_option("sqlalchemy.url"))
+    # Use settings from pydantic which already loaded .env
+    return settings.DATABASE_URL
 
 
 def run_migrations_offline() -> None:

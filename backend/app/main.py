@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.database import init_db
-from app.api import auth, attempts, recommendations, plans, topics, analytics
+from app.api import auth, attempts, recommendations, topics
 
 app = FastAPI(
     title="Adaptive Learning Decision Engine",
@@ -33,10 +33,11 @@ async def startup_event():
 # Include routers
 app.include_router(auth.router, prefix="/api/auth", tags=["authentication"])
 app.include_router(attempts.router, prefix="/api/attempts", tags=["performance"])
-app.include_router(recommendations.router, prefix="/api/recommendations", tags=["recommendations"])
-app.include_router(plans.router, prefix="/api/plans", tags=["study-plans"])
-app.include_router(topics.router, prefix="/api/topics", tags=["knowledge-graph"])
-app.include_router(analytics.router, prefix="/api/analytics", tags=["analytics"])
+app.include_router(recommendations.router)  # Has its own prefix
+app.include_router(topics.router)  # Has its own prefix
+# Note: plans and analytics routers are not yet implemented
+# app.include_router(plans.router, prefix="/api/plans", tags=["study-plans"])
+# app.include_router(analytics.router, prefix="/api/analytics", tags=["analytics"])
 
 @app.get("/")
 def root():

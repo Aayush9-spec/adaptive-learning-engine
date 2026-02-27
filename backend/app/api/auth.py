@@ -76,6 +76,15 @@ class TokenResponse(BaseModel):
     user: dict = Field(..., description="User information")
 
 
+class StudentProfileResponse(BaseModel):
+    """Student profile information"""
+    id: int
+    grade: int
+    target_exam: str
+    exam_date: Optional[str] = None
+    available_hours_per_day: float
+
+
 class UserResponse(BaseModel):
     """
     User information response model.
@@ -85,8 +94,9 @@ class UserResponse(BaseModel):
     id: int = Field(..., description="User ID")
     username: str = Field(..., description="Username")
     role: str = Field(..., description="User role")
-    created_at: datetime = Field(..., description="Account creation timestamp")
-    last_login: Optional[datetime] = Field(None, description="Last login timestamp")
+    created_at: str = Field(..., description="Account creation timestamp")
+    last_login: Optional[str] = Field(None, description="Last login timestamp")
+    student_profile: Optional[StudentProfileResponse] = Field(None, description="Student profile if user is a student")
 
 
 class LogoutResponse(BaseModel):
@@ -334,13 +344,25 @@ def get_me(current_user: User = Depends(get_current_user)):
     Validates: Requirements 8.1, 8.2, 13.1, 13.2
     """
     try:
-        return {
+        response = {
             "id": current_user.id,
             "username": current_user.username,
             "role": current_user.role,
-            "created_at": current_user.created_at,
-            "last_login": current_user.last_login
+            "created_at": current_user.created_at.isoformat() if current_user.created_at else None,
+            "last_login": current_user.last_login.isoformat() if current_user.last_login else None
         }
+        
+        # Add student_profile if user is a student
+        if current_user.role == "student" and current_user.student_profile:
+            response["student_profile"] = {
+                "id": current_user.student_profile.id,
+                "grade": current_user.student_profile.grade,
+                "target_exam": current_user.student_profile.target_exam,
+                "exam_date": current_user.student_profile.exam_date.isoformat() if current_user.student_profile.exam_date else None,
+                "available_hours_per_day": current_user.student_profile.available_hours_per_day
+            }
+        
+        return response
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

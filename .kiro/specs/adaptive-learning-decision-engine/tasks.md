@@ -70,7 +70,7 @@ The implementation uses Python with FastAPI for the backend, TypeScript with Nex
     - **Property 39: Token Validation**
     - **Validates: Requirements 8.1, 8.2, 8.3, 8.5, 8.6**
 
-- [ ] 3. Performance tracking system
+- [x] 3. Performance tracking system
   - [x] 3.1 Implement PerformanceTracker class
     - Create record_attempt method to store question attempts
     - Implement calculate_mastery_score with the specified formula
@@ -86,7 +86,7 @@ The implementation uses Python with FastAPI for the backend, TypeScript with Nex
     - GET /api/mastery/student/{student_id}/concept/{concept_id}
     - _Requirements: 1.1, 13.1, 13.2_
 
-  - [ ] 3.3 Write property tests for performance tracking
+  - [x] 3.3 Write property tests for performance tracking
     - **Property 1: Attempt Recording Completeness**
     - **Property 2: Multiple Attempt Preservation**
     - **Property 3: Mastery Score Bounds**

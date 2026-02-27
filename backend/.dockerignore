@@ -1,12 +1,15 @@
+# macOS files
+.DS_Store
+._*
+.AppleDouble
+.LSOverride
+
 # Python
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
-env/
-venv/
-ENV/
 build/
 develop-eggs/
 dist/
@@ -23,11 +26,10 @@ wheels/
 .installed.cfg
 *.egg
 
-# Testing
-.pytest_cache/
-.coverage
-htmlcov/
-.tox/
+# Virtual environments
+venv/
+ENV/
+env/
 
 # IDE
 .vscode/
@@ -36,27 +38,34 @@ htmlcov/
 *.swo
 *~
 
-# OS
-.DS_Store
-Thumbs.db
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
 
 # Environment
 .env
 .env.local
 .env.*.local
 
+# Logs
+*.log
+
 # Database
 *.db
 *.sqlite
 *.sqlite3
+local.db
+test_*.db
 
-# Logs
-*.log
+# Alembic
+alembic.ini.bak
 
 # Documentation
-docs/
-*.md
+docs/_build/
 
-# Git
-.git/
-.gitignore
+# Temporary files
+*.tmp
+*.bak
+*.swp

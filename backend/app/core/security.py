@@ -116,8 +116,9 @@ def get_current_user(
     except JWTError:
         raise credentials_exception
     
-    # Retrieve user from database
-    user = db.query(User).filter(User.username == username).first()
+    # Retrieve user from database with student_profile relationship
+    from sqlalchemy.orm import joinedload
+    user = db.query(User).options(joinedload(User.student_profile)).filter(User.username == username).first()
     
     if user is None:
         raise credentials_exception

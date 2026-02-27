@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login Test</title>
+</head>
+<body>
+    <h1>Login Test</h1>
+    <button onclick="testLogin()">Test Login</button>
+    <pre id="result"></pre>
+    
+    <script>
+        async function testLogin() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.textContent = 'Testing login...\n';
+            
+            try {
+                // Test 1: Login
+                resultDiv.textContent += '\n1. Testing login endpoint...\n';
+                const formData = new URLSearchParams();
+                formData.append('username', 'student1');
+                formData.append('password', 'password1');
+                
+                const loginResponse = await fetch('http://localhost:8000/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: formData
+                });
+                
+                resultDiv.textContent += `Login status: ${loginResponse.status}\n`;
+                
+                if (!loginResponse.ok) {
+                    const errorText = await loginResponse.text();
+                    resultDiv.textContent += `Login error: ${errorText}\n`;
+                    return;
+                }
+                
+                const loginData = await loginResponse.json();
+                resultDiv.textContent += `Login successful! Token: ${loginData.access_token.substring(0, 20)}...\n`;
+                
+                // Test 2: Get user info
+                resultDiv.textContent += '\n2. Testing /me endpoint...\n';
+                const meResponse = await fetch('http://localhost:8000/api/auth/me', {
+                    headers: { 'Authorization': `Bearer ${loginData.access_token}` }
+                });
+                
+                resultDiv.textContent += `Me status: ${meResponse.status}\n`;
+                
+                if (!meResponse.ok) {
+                    const errorText = await meResponse.text();
+                    resultDiv.textContent += `Me error: ${errorText}\n`;
+                    return;
+                }
+                
+                const userData = await meResponse.json();
+                resultDiv.textContent += `User data: ${JSON.stringify(userData, null, 2)}\n`;
+                
+                resultDiv.textContent += '\n✓ All tests passed!\n';
+                
+            } catch (error) {
+                resultDiv.textContent += `\n✗ Error: ${error.message}\n`;
+                resultDiv.textContent += `Stack: ${error.stack}\n`;
+            }
+        }
+    </script>
+</body>
+</html>

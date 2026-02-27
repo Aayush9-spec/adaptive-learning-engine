@@ -1,220 +1,348 @@
-from typing import List, Dict, Optional
 from sqlalchemy.orm import Session
-from datetime import datetime, timedelta
-from app.models.knowledge_graph import Topic, TopicPrerequisite, Concept
+from sqlalchemy import and_
+from app.models.knowledge_graph import Topic, Concept
 from app.models.performance import ConceptMastery
 from app.models.user import StudentProfile
-import math
+from app.services.knowledge_graph_manager import KnowledgeGraphManager
+from typing import Dict, List, Optional, Tuple
+from functools import lru_cache
+from datetime import datetime, timedelta, date
+
 
 class DecisionEngine:
-    """Core decision intelligence algorithm"""
+    """Core recommendation algorithm"""
     
     def __init__(self, db: Session):
         self.db = db
-        self._cache = {}
-        self._cache_ttl = 300  # 5 minutes
+        self.kg_manager = KnowledgeGraphManager(db)
     
     def compute_priority_score(
         self,
         student_id: int,
         topic_id: int,
-        exam_date: Optional[datetime] = None
+        current_mastery: float,
+        exam_weightage: float,
+        time_to_exam_days: int,
+        estimated_hours: float
     ) -> float:
         """
         Compute priority score using the formula:
-        Priority_Score = (Exam_Weightage × Importance_Factor) / 
-                         (Weakness_Score × Dependency_Factor × Mastery_Level × Time_Cost)
+        
+        priority_score = (
+            0.4 * (100 - current_mastery) +
+            0.3 * exam_weightage +
+            0.2 * urgency_factor +
+            0.1 * efficiency_factor
+        )
+        
+        where:
+        - urgency_factor = 100 * (1 - days_to_exam / 365)
+        - efficiency_factor = 100 * (1 / estimated_hours)
+        
+        Args:
+            student_id: ID of the student
+            topic_id: ID of the topic
+            current_mastery: Current mastery score (0-100)
+            exam_weightage: Exam weightage (0-100)
+            time_to_exam_days: Days until exam
+            estimated_hours: Estimated study time
+            
+        Returns:
+            Priority score (0-100)
+        """
+        # Mastery gap (higher gap = higher priority)
+        mastery_gap = 100 - current_mastery
+        
+        # Urgency factor (closer to exam = higher urgency)
+        urgency_factor = 100 * (1 - min(time_to_exam_days, 365) / 365)
+        
+        # Efficiency factor (less time needed = higher efficiency)
+        efficiency_factor = 100 * (1 / max(estimated_hours, 0.5))
+        efficiency_factor = min(efficiency_factor, 100)  # Cap at 100
+        
+        # Compute weighted priority score
+        priority_score = (
+            0.4 * mastery_gap +
+            0.3 * exam_weightage +
+            0.2 * urgency_factor +
+            0.1 * efficiency_factor
+        )
+        
+        return priority_score
+    
+    def get_next_recommendation(
+        self,
+        student_id: int,
+        mastery_threshold: float = 60.0
+    ) -> Optional[Dict]:
+        """
+        Get the highest priority topic recommendation.
+        
+        Args:
+            student_id: ID of the student
+            mastery_threshold: Minimum mastery for prerequisites
+            
+        Returns:
+            Recommended topic with details, or None if no topics available
+        """
+        recommendations = self.get_top_n_recommendations(student_id, n=1, mastery_threshold=mastery_threshold)
+        return recommendations[0] if recommendations else None
+    
+    def get_top_n_recommendations(
+        self,
+        student_id: int,
+        n: int = 5,
+        mastery_threshold: float = 60.0
+    ) -> List[Dict]:
+        """
+        Get top N topic recommendations sorted by priority.
+        
+        Args:
+            student_id: ID of the student
+            n: Number of recommendations
+            mastery_threshold: Minimum mastery for prerequisites
+            
+        Returns:
+            List of recommended topics with priority scores
+        """
+        # Get student profile
+        student = self.db.query(StudentProfile).filter(StudentProfile.id == student_id).first()
+        if not student:
+            return []
+        
+        # Calculate days to exam
+        if student.exam_date:
+            # Convert to date if it's a datetime
+            if hasattr(student.exam_date, 'date'):
+                exam_date = student.exam_date.date()
+            else:
+                exam_date = student.exam_date
+            time_to_exam_days = (exam_date - datetime.utcnow().date()).days
+        else:
+            time_to_exam_days = 180  # Default 6 months
+        
+        # Get unlockable topics
+        unlockable = self.kg_manager.get_unlockable_topics(student_id, mastery_threshold)
+        
+        # Compute priority scores
+        scored_topics = []
+        for topic_data in unlockable:
+            priority_score = self.compute_priority_score(
+                student_id=student_id,
+                topic_id=topic_data["id"],
+                current_mastery=topic_data["current_mastery"],
+                exam_weightage=topic_data["exam_weightage"],
+                time_to_exam_days=time_to_exam_days,
+                estimated_hours=topic_data["estimated_hours"]
+            )
+            
+            scored_topics.append({
+                "topic_id": topic_data["id"],
+                "topic_name": topic_data["name"],
+                "priority_score": priority_score,
+                "current_mastery": topic_data["current_mastery"],
+                "exam_weightage": topic_data["exam_weightage"],
+                "estimated_hours": topic_data["estimated_hours"],
+                "expected_marks_gain": (100 - topic_data["current_mastery"]) * topic_data["exam_weightage"] / 100
+            })
+        
+        # Sort by priority score (descending) - deterministic
+        scored_topics.sort(key=lambda x: (-x["priority_score"], x["topic_id"]))
+        
+        return scored_topics[:n]
+    
+    def get_concept_recommendations(
+        self,
+        student_id: int,
+        topic_id: int,
+        n: int = 5
+    ) -> List[Dict]:
+        """
+        Get concept-level recommendations within a topic.
+        
+        Args:
+            student_id: ID of the student
+            topic_id: ID of the topic
+            n: Number of concepts to recommend
+            
+        Returns:
+            List of recommended concepts
+        """
+        # Get all concepts for the topic
+        concepts = self.db.query(Concept).filter(Concept.topic_id == topic_id).all()
+        
+        scored_concepts = []
+        for concept in concepts:
+            # Get mastery score
+            mastery = self.db.query(ConceptMastery).filter(
+                and_(
+                    ConceptMastery.student_id == student_id,
+                    ConceptMastery.concept_id == concept.id
+                )
+            ).first()
+            
+            current_mastery = mastery.mastery_score if mastery else 0.0
+            
+            # Simple priority: focus on concepts with lowest mastery
+            priority = 100 - current_mastery
+            
+            scored_concepts.append({
+                "concept_id": concept.id,
+                "concept_name": concept.name,
+                "current_mastery": current_mastery,
+                "priority": priority
+            })
+        
+        # Sort by priority (descending)
+        scored_concepts.sort(key=lambda x: (-x["priority"], x["concept_id"]))
+        
+        return scored_concepts[:n]
+
+
+class ExplanationGenerator:
+    """Generate human-readable explanations for recommendations"""
+    
+    def __init__(self, db: Session):
+        self.db = db
+        self.decision_engine = DecisionEngine(db)
+    
+    def generate_explanation(
+        self,
+        student_id: int,
+        topic_id: int
+    ) -> Dict:
+        """
+        Generate detailed explanation for why a topic is recommended.
+        
+        Args:
+            student_id: ID of the student
+            topic_id: ID of the topic
+            
+        Returns:
+            Explanation with all formula components
         """
         # Get topic
         topic = self.db.query(Topic).filter(Topic.id == topic_id).first()
         if not topic:
-            return 0.0
+            return {"error": "Topic not found"}
         
-        # Get student profile
+        # Get student
         student = self.db.query(StudentProfile).filter(StudentProfile.id == student_id).first()
         if not student:
-            return 0.0
+            return {"error": "Student not found"}
         
-        # Calculate components
-        exam_weightage = topic.exam_weightage
-        importance_factor = self._calculate_importance_factor(exam_date)
-        weakness_score = self._calculate_weakness_score(student_id, topic_id)
-        dependency_factor = self._calculate_dependency_factor(topic_id)
-        mastery_level = self._get_topic_mastery(student_id, topic_id)
-        time_cost = self._calculate_time_cost(topic, student)
-        
-        # Compute priority score
-        numerator = exam_weightage * importance_factor
-        denominator = weakness_score * dependency_factor * mastery_level * time_cost
-        
-        priority_score = numerator / max(denominator, 0.01)  # Avoid division by zero
-        
-        return priority_score
-    
-    def get_next_recommendation(self, student_id: int) -> Optional[Dict]:
-        """Get the highest priority topic recommendation"""
-        # Get all topics where prerequisites are met
-        eligible_topics = self._get_eligible_topics(student_id)
-        
-        if not eligible_topics:
-            return None
-        
-        # Get student for exam date
-        student = self.db.query(StudentProfile).filter(StudentProfile.id == student_id).first()
-        exam_date = student.exam_date if student else None
-        
-        # Compute priority scores
-        topic_scores = []
-        for topic in eligible_topics:
-            score = self.compute_priority_score(student_id, topic.id, exam_date)
-            topic_scores.append((topic, score))
-        
-        # Sort by priority score (descending)
-        topic_scores.sort(key=lambda x: x[1], reverse=True)
-        
-        if not topic_scores:
-            return None
-        
-        best_topic, best_score = topic_scores[0]
-        
-        # Generate explanation
-        explanation = self._generate_explanation(student_id, best_topic, best_score)
-        
-        return {
-            "topic_id": best_topic.id,
-            "topic_name": best_topic.name,
-            "priority_score": best_score,
-            "expected_marks_gain": self._estimate_marks_gain(best_topic),
-            "estimated_study_hours": best_topic.estimated_hours,
-            "explanation": explanation
-        }
-    
-    def get_top_n_recommendations(self, student_id: int, n: int = 5) -> List[Dict]:
-        """Get top N recommendations"""
-        eligible_topics = self._get_eligible_topics(student_id)
-        
-        if not eligible_topics:
-            return []
-        
-        student = self.db.query(StudentProfile).filter(StudentProfile.id == student_id).first()
-        exam_date = student.exam_date if student else None
-        
-        topic_scores = []
-        for topic in eligible_topics:
-            score = self.compute_priority_score(student_id, topic.id, exam_date)
-            explanation = self._generate_explanation(student_id, topic, score)
-            topic_scores.append({
-                "topic_id": topic.id,
-                "topic_name": topic.name,
-                "priority_score": score,
-                "expected_marks_gain": self._estimate_marks_gain(topic),
-                "estimated_study_hours": topic.estimated_hours,
-                "explanation": explanation
-            })
-        
-        topic_scores.sort(key=lambda x: x["priority_score"], reverse=True)
-        return topic_scores[:n]
-    
-    def _get_eligible_topics(self, student_id: int) -> List[Topic]:
-        """Get topics where prerequisites are met"""
-        all_topics = self.db.query(Topic).all()
-        eligible = []
-        
-        for topic in all_topics:
-            if self._check_prerequisites_met(student_id, topic.id):
-                eligible.append(topic)
-        
-        return eligible
-    
-    def _check_prerequisites_met(self, student_id: int, topic_id: int, threshold: float = 60.0) -> bool:
-        """Check if all prerequisites for a topic are met"""
-        prerequisites = self.db.query(TopicPrerequisite).filter(
-            TopicPrerequisite.topic_id == topic_id
-        ).all()
-        
-        for prereq in prerequisites:
-            mastery = self._get_topic_mastery(student_id, prereq.prerequisite_topic_id)
-            if mastery < prereq.minimum_mastery:
-                return False
-        
-        return True
-    
-    def _get_topic_mastery(self, student_id: int, topic_id: int) -> float:
-        """Get average mastery score for all concepts in a topic"""
+        # Get current mastery
         concepts = self.db.query(Concept).filter(Concept.topic_id == topic_id).all()
-        
-        if not concepts:
-            return 0.0
-        
-        total_mastery = 0.0
-        count = 0
-        
+        mastery_scores = []
         for concept in concepts:
             mastery = self.db.query(ConceptMastery).filter(
-                ConceptMastery.student_id == student_id,
-                ConceptMastery.concept_id == concept.id
+                and_(
+                    ConceptMastery.student_id == student_id,
+                    ConceptMastery.concept_id == concept.id
+                )
             ).first()
-            
             if mastery:
-                total_mastery += mastery.mastery_score
-                count += 1
+                mastery_scores.append(mastery.mastery_score)
         
-        return total_mastery / count if count > 0 else 0.0
+        current_mastery = sum(mastery_scores) / len(mastery_scores) if mastery_scores else 0.0
+        
+        # Calculate time to exam
+        if student.exam_date:
+            # Convert to date if it's a datetime
+            if hasattr(student.exam_date, 'date'):
+                exam_date = student.exam_date.date()
+            else:
+                exam_date = student.exam_date
+            time_to_exam_days = (exam_date - datetime.utcnow().date()).days
+        else:
+            time_to_exam_days = 180
+        
+        # Compute priority score and components
+        mastery_gap = 100 - current_mastery
+        urgency_factor = 100 * (1 - min(time_to_exam_days, 365) / 365)
+        efficiency_factor = 100 * (1 / max(topic.estimated_hours, 0.5))
+        efficiency_factor = min(efficiency_factor, 100)
+        
+        priority_score = self.decision_engine.compute_priority_score(
+            student_id=student_id,
+            topic_id=topic_id,
+            current_mastery=current_mastery,
+            exam_weightage=topic.exam_weightage,
+            time_to_exam_days=time_to_exam_days,
+            estimated_hours=topic.estimated_hours
+        )
+        
+        # Generate explanation
+        explanation = self.format_reasoning(
+            topic_name=topic.name,
+            priority_score=priority_score,
+            mastery_gap=mastery_gap,
+            current_mastery=current_mastery,
+            exam_weightage=topic.exam_weightage,
+            urgency_factor=urgency_factor,
+            time_to_exam_days=time_to_exam_days,
+            efficiency_factor=efficiency_factor,
+            estimated_hours=topic.estimated_hours
+        )
+        
+        return {
+            "topic_id": topic_id,
+            "topic_name": topic.name,
+            "priority_score": round(priority_score, 2),
+            "explanation": explanation,
+            "components": {
+                "mastery_gap": round(mastery_gap, 2),
+                "current_mastery": round(current_mastery, 2),
+                "exam_weightage": topic.exam_weightage,
+                "urgency_factor": round(urgency_factor, 2),
+                "time_to_exam_days": time_to_exam_days,
+                "efficiency_factor": round(efficiency_factor, 2),
+                "estimated_hours": topic.estimated_hours
+            }
+        }
     
-    def _calculate_importance_factor(self, exam_date: Optional[datetime]) -> float:
-        """Calculate importance based on proximity to exam"""
-        if not exam_date:
-            return 1.0
+    def format_reasoning(
+        self,
+        topic_name: str,
+        priority_score: float,
+        mastery_gap: float,
+        current_mastery: float,
+        exam_weightage: float,
+        urgency_factor: float,
+        time_to_exam_days: int,
+        efficiency_factor: float,
+        estimated_hours: float
+    ) -> str:
+        """
+        Format explanation using template.
         
-        days_until_exam = (exam_date - datetime.utcnow()).days
-        
-        if days_until_exam < 30:
-            return 1.5  # Boost importance if exam is soon
-        
-        return 1.0
-    
-    def _calculate_weakness_score(self, student_id: int, topic_id: int) -> float:
-        """Calculate weakness score (inverse of mastery)"""
-        mastery = self._get_topic_mastery(student_id, topic_id)
-        weakness = max(0.1, 1.0 - mastery / 100.0)
-        return weakness
-    
-    def _calculate_dependency_factor(self, topic_id: int) -> float:
-        """Calculate how many topics this unlocks"""
-        # Count topics that have this as a prerequisite
-        dependent_count = self.db.query(TopicPrerequisite).filter(
-            TopicPrerequisite.prerequisite_topic_id == topic_id
-        ).count()
-        
-        return 1.0 / (1.0 + dependent_count)
-    
-    def _calculate_time_cost(self, topic: Topic, student: StudentProfile) -> float:
-        """Calculate time cost relative to available time"""
-        if student.available_hours_per_day <= 0:
-            return 1.0
-        
-        time_cost = topic.estimated_hours / student.available_hours_per_day
-        return max(0.1, time_cost)
-    
-    def _estimate_marks_gain(self, topic: Topic) -> float:
-        """Estimate potential marks improvement"""
-        # Simple estimation: weightage * improvement potential
-        return topic.exam_weightage * 0.7  # Assume 70% improvement potential
-    
-    def _generate_explanation(self, student_id: int, topic: Topic, priority_score: float) -> str:
-        """Generate human-readable explanation"""
-        mastery = self._get_topic_mastery(student_id, topic.id)
-        dependent_count = self.db.query(TopicPrerequisite).filter(
-            TopicPrerequisite.prerequisite_topic_id == topic.id
-        ).count()
-        marks_gain = self._estimate_marks_gain(topic)
-        
-        explanation = f"""Study {topic.name} because:
-• {topic.exam_weightage:.1f}% of exam questions come from this topic
-• Your current mastery is {mastery:.1f}% (needs improvement)
-• Mastering this unlocks {dependent_count} future chapters
-• Expected improvement: +{marks_gain:.1f} marks
-• Estimated study time: {topic.estimated_hours:.1f} hours
-• Priority score: {priority_score:.2f}"""
+        Returns:
+            Human-readable explanation string
+        """
+        explanation = f"""
+**Why study {topic_name} now?**
+
+**Priority Score: {priority_score:.1f}/100**
+
+This topic is recommended based on:
+
+1. **Mastery Gap (40% weight)**: You currently have {current_mastery:.1f}% mastery, leaving a gap of {mastery_gap:.1f}%. Improving this will significantly boost your overall performance.
+
+2. **Exam Importance (30% weight)**: This topic carries {exam_weightage:.1f}% weightage in your exam, making it crucial for your final score.
+
+3. **Urgency (20% weight)**: With {time_to_exam_days} days until your exam, the urgency factor is {urgency_factor:.1f}/100. {
+    "Time is running out - prioritize this now!" if urgency_factor > 70 else
+    "You have moderate time to prepare." if urgency_factor > 40 else
+    "You have ample time to master this topic."
+}
+
+4. **Efficiency (10% weight)**: This topic requires approximately {estimated_hours:.1f} hours of study (efficiency factor: {efficiency_factor:.1f}/100). {
+    "Quick to master!" if estimated_hours < 3 else
+    "Moderate time investment needed." if estimated_hours < 8 else
+    "Requires significant time commitment."
+}
+
+**Expected Impact**: Mastering this topic could improve your exam score by approximately {(mastery_gap * exam_weightage / 100):.1f} marks.
+        """.strip()
         
         return explanation

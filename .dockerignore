@@ -1,0 +1,26 @@
+# macOS files
+.DS_Store
+._*
+.AppleDouble
+.LSOverride
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+*.md
+docs/
+
+# IDE
+.vscode/
+.idea/
+.kiro/
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
