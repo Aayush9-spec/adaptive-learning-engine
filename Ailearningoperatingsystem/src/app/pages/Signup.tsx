@@ -1,23 +1,17 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router';
 import { useAuth } from '../hooks/useAuth';
-import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
-import { Label } from '../components/ui/label';
-import { Separator } from '../components/ui/separator';
 import {
     Brain,
-    ArrowRight,
+    UserPlus,
     User,
     Mail,
     Phone,
     Lock,
+    Eye,
+    EyeOff,
     GraduationCap,
-    Target,
-    Zap,
-    TrendingUp,
-    Shield,
-    CheckCircle2,
 } from 'lucide-react';
 
 export function Signup() {
@@ -30,24 +24,18 @@ export function Signup() {
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [goal, setGoal] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirm, setShowConfirm] = useState(false);
     const [agreedToTerms, setAgreedToTerms] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
 
     const goals = [
-        'JEE Main & Advanced',
-        'NEET UG',
-        'UPSC Civil Services',
-        'SSC Exams',
-        'Coding & Development',
-        'Data Science & AI',
-        'Gate',
-        'CAT & MBA',
-        'Other',
+        'JEE Main & Advanced', 'NEET UG', 'UPSC Civil Services', 'SSC Exams',
+        'Coding & Development', 'Data Science & AI', 'Gate', 'CAT & MBA', 'Other',
     ];
 
     const handleSignup = async () => {
-        // Validation
         if (!name.trim()) { setError('Please enter your full name'); return; }
         if (!email.trim()) { setError('Please enter your email address'); return; }
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setError('Please enter a valid email'); return; }
@@ -57,352 +45,229 @@ export function Signup() {
         if (!goal) { setError('Please select your learning goal'); return; }
         if (!agreedToTerms) { setError('Please agree to the Terms & Conditions'); return; }
 
-        setError('');
-        setIsLoading(true);
+        setError(''); setIsLoading(true);
         try {
-            await signup({
-                name: name.trim(),
-                email: email.trim(),
-                phone,
-                password,
-                goal,
-            });
+            await signup({ name: name.trim(), email: email.trim(), phone, password, goal });
             navigate('/');
-        } catch (err: any) {
-            setError(err.message || 'Registration failed. Please try again.');
-        } finally {
-            setIsLoading(false);
-        }
+        } catch (err: any) { setError(err.message || 'Registration failed'); }
+        finally { setIsLoading(false); }
     };
 
     const handleGoogleSignup = async () => {
         setIsLoading(true);
-        try {
-            await googleAuth();
-            navigate('/');
-        } catch (err: any) {
-            setError(err.message || 'Google sign-up failed');
-        } finally {
-            setIsLoading(false);
-        }
+        try { await googleAuth(); navigate('/'); }
+        catch (err: any) { setError(err.message || 'Google sign-up failed'); }
+        finally { setIsLoading(false); }
     };
 
-    const features = [
-        {
-            icon: Target,
-            title: 'AI-Powered Learning GPS',
-            desc: 'Personalized learning paths that adapt to you',
-        },
-        {
-            icon: Zap,
-            title: 'Flow Mode',
-            desc: 'Deep focus sessions with AI coaching',
-        },
-        {
-            icon: TrendingUp,
-            title: 'Predictive Analytics',
-            desc: 'Know your progress before it happens',
-        },
-        {
-            icon: Shield,
-            title: 'Smart Assessments',
-            desc: 'AI-generated tests that find your gaps',
-        },
-    ];
-
-    const benefits = [
-        'Unlimited access to AI-powered courses',
-        'Personalized learning path optimization',
-        'Real-time progress tracking & insights',
-        'AI coaching available 24/7',
-    ];
-
     return (
-        <div className="min-h-screen flex flex-col lg:flex-row">
-            {/* Left Brand Panel */}
-            <div className="hidden lg:flex lg:w-[55%] relative overflow-hidden bg-gradient-to-br from-[#1a1a2e] via-[#16213e] to-[#0f3460]">
-                {/* Animated Background Elements */}
-                <div className="absolute inset-0">
-                    <div className="absolute top-20 left-20 w-72 h-72 bg-primary/20 rounded-full blur-[100px] animate-pulse" />
-                    <div className="absolute bottom-32 right-16 w-96 h-96 bg-[#7c3aed]/15 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '1s' }} />
-                    <div className="absolute top-1/2 left-1/3 w-64 h-64 bg-secondary/10 rounded-full blur-[80px] animate-pulse" style={{ animationDelay: '2s' }} />
-                </div>
+        <div className="min-h-screen relative overflow-hidden flex flex-col">
+            {/* Sky gradient background */}
+            <div className="absolute inset-0 bg-gradient-to-b from-[#a8d8f0] via-[#c5e6f6] to-[#e8f4fc]" />
+            {/* Cloud-like shapes */}
+            <div className="absolute bottom-0 left-0 right-0 h-[40%]"
+                style={{
+                    background: 'radial-gradient(ellipse 80% 60% at 20% 100%, rgba(255,255,255,0.8) 0%, transparent 60%), radial-gradient(ellipse 70% 50% at 60% 100%, rgba(255,255,255,0.7) 0%, transparent 55%), radial-gradient(ellipse 90% 40% at 80% 100%, rgba(255,255,255,0.6) 0%, transparent 50%)',
+                }}
+            />
+            {/* Subtle circle arcs */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/3 w-[700px] h-[700px] border border-white/20 rounded-full" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/3 w-[900px] h-[900px] border border-white/10 rounded-full" />
 
-                {/* Grid Pattern Overlay */}
-                <div className="absolute inset-0 opacity-[0.03]" style={{
-                    backgroundImage: `linear-gradient(rgba(255,255,255,.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.1) 1px, transparent 1px)`,
-                    backgroundSize: '60px 60px',
-                }} />
-
-                <div className="relative z-10 flex flex-col justify-center px-16 py-12 w-full">
-                    {/* Logo */}
-                    <div className="flex items-center gap-3 mb-16">
-                        <div className="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/30">
-                            <Brain className="w-7 h-7 text-white" />
-                        </div>
-                        <span className="text-2xl font-bold text-white tracking-tight">AI Learning OS</span>
-                    </div>
-
-                    {/* Hero Text */}
-                    <div className="mb-12">
-                        <h1 className="text-5xl font-bold text-white leading-tight mb-4">
-                            Start Your
-                            <br />
-                            <span className="bg-gradient-to-r from-[#10b981] to-[#2d5bff] bg-clip-text text-transparent">
-                                Learning Journey
-                            </span>
-                        </h1>
-                        <p className="text-lg text-white/60 max-w-md leading-relaxed">
-                            Join thousands of learners who are accelerating their growth with AI-powered personalized education.
-                        </p>
-                    </div>
-
-                    {/* Benefits List */}
-                    <div className="space-y-4 mb-12">
-                        {benefits.map((benefit, i) => (
-                            <div key={i} className="flex items-center gap-3">
-                                <div className="w-6 h-6 bg-secondary/20 rounded-full flex items-center justify-center shrink-0">
-                                    <CheckCircle2 className="w-4 h-4 text-secondary" />
-                                </div>
-                                <span className="text-white/70 text-sm">{benefit}</span>
-                            </div>
-                        ))}
-                    </div>
-
-                    {/* Feature Cards (Compact) */}
-                    <div className="grid grid-cols-2 gap-3">
-                        {features.map((feature, i) => (
-                            <div
-                                key={i}
-                                className="bg-white/[0.06] backdrop-blur-sm border border-white/[0.08] rounded-xl p-4 hover:bg-white/[0.1] transition-all duration-300"
-                            >
-                                <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center shrink-0">
-                                        <feature.icon className="w-4 h-4 text-primary" />
-                                    </div>
-                                    <div>
-                                        <h3 className="text-xs font-semibold text-white">{feature.title}</h3>
-                                        <p className="text-[10px] text-white/40">{feature.desc}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </div>
-
-            {/* Right Auth Panel */}
-            <div className="flex-1 flex items-center justify-center px-6 py-12 bg-gradient-to-br from-gray-50 to-green-50/20 relative">
-                {/* Subtle Background Decor */}
-                <div className="absolute top-10 right-10 w-40 h-40 bg-secondary/5 rounded-full blur-3xl" />
-                <div className="absolute bottom-10 left-10 w-56 h-56 bg-primary/5 rounded-full blur-3xl" />
-
-                {/* Mobile Logo */}
-                <div className="lg:hidden absolute top-6 left-6 flex items-center gap-2">
-                    <div className="w-9 h-9 bg-primary rounded-xl flex items-center justify-center">
+            {/* Top bar with logo */}
+            <div className="relative z-10 px-6 py-5">
+                <Link to="/" className="flex items-center gap-2.5 w-fit">
+                    <div className="w-9 h-9 bg-[#08BD80] rounded-xl flex items-center justify-center shadow-md">
                         <Brain className="w-5 h-5 text-white" />
                     </div>
-                    <span className="text-lg font-bold text-foreground">AI Learning OS</span>
-                </div>
+                    <span className="text-lg font-bold text-[#1a1a2e]">AI Learning OS</span>
+                </Link>
+            </div>
 
-                <div className="w-full max-w-[420px] relative z-10">
-                    {/* Auth Card */}
-                    <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] border border-white/60 p-8 lg:p-10">
-                        {/* Header */}
-                        <div className="text-center mb-6">
-                            <div className="w-16 h-16 bg-gradient-to-br from-primary to-[#05A672] rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-secondary/25">
-                                <GraduationCap className="w-8 h-8 text-white" />
+            {/* Centered card */}
+            <div className="relative z-10 flex-1 flex items-center justify-center px-4 pb-12">
+                <div className="w-full max-w-[440px]">
+                    <div className="bg-white/60 backdrop-blur-2xl rounded-3xl shadow-[0_8px_40px_rgba(0,0,0,0.08)] border border-white/70 p-8 sm:p-10">
+
+                        {/* Icon */}
+                        <div className="flex justify-center mb-5">
+                            <div className="w-14 h-14 bg-white rounded-2xl shadow-md flex items-center justify-center">
+                                <UserPlus className="w-6 h-6 text-[#3C4852]" />
                             </div>
-                            <h2 className="text-2xl font-bold text-foreground">Create Account</h2>
-                            <p className="text-sm text-muted-foreground mt-1.5">
-                                Join for free and start learning today
-                            </p>
                         </div>
 
-                        {/* Error Message */}
+                        {/* Heading */}
+                        <h1 className="text-2xl font-bold text-center text-[#1a1a2e] mb-1.5">Create your account</h1>
+                        <p className="text-sm text-center text-[#6b7280] mb-6">
+                            Start your AI-powered learning journey. For free
+                        </p>
+
+                        {/* Error */}
                         {error && (
-                            <div className="bg-destructive/10 text-destructive text-sm rounded-xl px-4 py-3 mb-5 border border-destructive/20 flex items-center gap-2">
-                                <div className="w-1.5 h-1.5 bg-destructive rounded-full shrink-0" />
+                            <div className="bg-red-50 text-red-600 text-sm rounded-xl px-4 py-2.5 mb-5 border border-red-100">
                                 {error}
                             </div>
                         )}
 
-                        {/* Google Signup (Top) */}
-                        <Button
-                            variant="outline"
-                            onClick={handleGoogleSignup}
-                            disabled={isLoading}
-                            className="w-full h-11 rounded-xl border-border/60 bg-white hover:bg-gray-50 text-foreground font-medium text-sm transition-all hover:shadow-md mb-5"
-                        >
-                            <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
-                                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
-                                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-                                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
-                                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
-                            </svg>
-                            Sign up with Google
-                        </Button>
-
-                        {/* Divider */}
-                        <div className="flex items-center gap-3 mb-5">
-                            <Separator className="flex-1 bg-border/40" />
-                            <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">or</span>
-                            <Separator className="flex-1 bg-border/40" />
-                        </div>
-
-                        {/* Signup Form */}
-                        <div className="space-y-4">
-                            {/* Full Name */}
-                            <div className="space-y-1.5">
-                                <Label htmlFor="name" className="text-xs font-medium">Full Name</Label>
-                                <div className="relative">
-                                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                                    <Input
-                                        id="name"
-                                        type="text"
-                                        placeholder="Enter your full name"
-                                        value={name}
-                                        onChange={(e) => setName(e.target.value)}
-                                        className="h-11 rounded-xl bg-muted/30 border-border/40 pl-10 focus-visible:border-primary"
-                                    />
-                                </div>
+                        {/* Form */}
+                        <div className="space-y-3">
+                            {/* Name */}
+                            <div className="relative">
+                                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9ca3af]" />
+                                <Input
+                                    type="text"
+                                    placeholder="Full Name"
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                    className="h-12 rounded-xl bg-[#f3f4f6] border-0 pl-11 text-sm placeholder:text-[#9ca3af] focus-visible:ring-2 focus-visible:ring-[#08BD80]/30"
+                                />
                             </div>
 
                             {/* Email */}
-                            <div className="space-y-1.5">
-                                <Label htmlFor="signup-email" className="text-xs font-medium">Email</Label>
-                                <div className="relative">
-                                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                                    <Input
-                                        id="signup-email"
-                                        type="email"
-                                        placeholder="you@example.com"
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                        className="h-11 rounded-xl bg-muted/30 border-border/40 pl-10 focus-visible:border-primary"
-                                    />
-                                </div>
+                            <div className="relative">
+                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9ca3af]" />
+                                <Input
+                                    type="email"
+                                    placeholder="Email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    className="h-12 rounded-xl bg-[#f3f4f6] border-0 pl-11 text-sm placeholder:text-[#9ca3af] focus-visible:ring-2 focus-visible:ring-[#08BD80]/30"
+                                />
                             </div>
 
                             {/* Phone */}
-                            <div className="space-y-1.5">
-                                <Label htmlFor="signup-phone" className="text-xs font-medium">Phone Number</Label>
-                                <div className="flex gap-2">
-                                    <div className="flex items-center px-3 bg-muted/60 border border-border/40 rounded-xl text-xs font-medium text-muted-foreground shrink-0">
-                                        +91
-                                    </div>
-                                    <div className="relative flex-1">
-                                        <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                                        <Input
-                                            id="signup-phone"
-                                            type="text"
-                                            inputMode="numeric"
-                                            placeholder="Phone number"
-                                            value={phone}
-                                            onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                                            className="h-11 rounded-xl bg-muted/30 border-border/40 pl-10 focus-visible:border-primary"
-                                        />
-                                    </div>
+                            <div className="flex gap-2">
+                                <div className="flex items-center px-3.5 bg-[#f3f4f6] rounded-xl text-sm font-medium text-[#6b7280] shrink-0 h-12">
+                                    +91
+                                </div>
+                                <div className="relative flex-1">
+                                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9ca3af]" />
+                                    <Input
+                                        type="text"
+                                        inputMode="numeric"
+                                        placeholder="Phone number"
+                                        value={phone}
+                                        onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                                        className="h-12 rounded-xl bg-[#f3f4f6] border-0 pl-11 text-sm placeholder:text-[#9ca3af] focus-visible:ring-2 focus-visible:ring-[#08BD80]/30"
+                                    />
                                 </div>
                             </div>
 
                             {/* Password Row */}
-                            <div className="grid grid-cols-2 gap-3">
-                                <div className="space-y-1.5">
-                                    <Label htmlFor="signup-password" className="text-xs font-medium">Password</Label>
-                                    <div className="relative">
-                                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                                        <Input
-                                            id="signup-password"
-                                            type="password"
-                                            placeholder="Min 6 chars"
-                                            value={password}
-                                            onChange={(e) => setPassword(e.target.value)}
-                                            className="h-11 rounded-xl bg-muted/30 border-border/40 pl-9 focus-visible:border-primary"
-                                        />
-                                    </div>
+                            <div className="grid grid-cols-2 gap-2">
+                                <div className="relative">
+                                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9ca3af]" />
+                                    <Input
+                                        type={showPassword ? 'text' : 'password'}
+                                        placeholder="Password"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        className="h-12 rounded-xl bg-[#f3f4f6] border-0 pl-11 pr-10 text-sm placeholder:text-[#9ca3af] focus-visible:ring-2 focus-visible:ring-[#08BD80]/30"
+                                    />
+                                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9ca3af] hover:text-[#6b7280]">
+                                        {showPassword ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                                    </button>
                                 </div>
-                                <div className="space-y-1.5">
-                                    <Label htmlFor="confirm-password" className="text-xs font-medium">Confirm</Label>
-                                    <div className="relative">
-                                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                                        <Input
-                                            id="confirm-password"
-                                            type="password"
-                                            placeholder="Re-enter"
-                                            value={confirmPassword}
-                                            onChange={(e) => setConfirmPassword(e.target.value)}
-                                            className="h-11 rounded-xl bg-muted/30 border-border/40 pl-9 focus-visible:border-primary"
-                                        />
-                                    </div>
+                                <div className="relative">
+                                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9ca3af]" />
+                                    <Input
+                                        type={showConfirm ? 'text' : 'password'}
+                                        placeholder="Confirm"
+                                        value={confirmPassword}
+                                        onChange={(e) => setConfirmPassword(e.target.value)}
+                                        className="h-12 rounded-xl bg-[#f3f4f6] border-0 pl-11 pr-10 text-sm placeholder:text-[#9ca3af] focus-visible:ring-2 focus-visible:ring-[#08BD80]/30"
+                                    />
+                                    <button type="button" onClick={() => setShowConfirm(!showConfirm)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9ca3af] hover:text-[#6b7280]">
+                                        {showConfirm ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                                    </button>
                                 </div>
                             </div>
 
                             {/* Goal Selection */}
-                            <div className="space-y-1.5">
-                                <Label htmlFor="goal" className="text-xs font-medium">
-                                    <GraduationCap className="w-3.5 h-3.5 inline mr-1" />
-                                    What do you want to learn?
-                                </Label>
+                            <div className="relative">
+                                <GraduationCap className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9ca3af]" />
                                 <select
-                                    id="goal"
                                     value={goal}
                                     onChange={(e) => setGoal(e.target.value)}
-                                    className="w-full h-11 rounded-xl bg-muted/30 border border-border/40 px-3.5 text-sm text-foreground focus:border-primary focus:ring-[3px] focus:ring-primary/20 outline-none transition-all appearance-none cursor-pointer"
+                                    className="w-full h-12 rounded-xl bg-[#f3f4f6] border-0 pl-11 pr-4 text-sm text-[#3C4852] focus:ring-2 focus:ring-[#08BD80]/30 outline-none appearance-none cursor-pointer"
                                 >
-                                    <option value="" disabled>Select your goal</option>
-                                    {goals.map((g) => (
-                                        <option key={g} value={g}>{g}</option>
-                                    ))}
+                                    <option value="" disabled>What do you want to learn?</option>
+                                    {goals.map((g) => <option key={g} value={g}>{g}</option>)}
                                 </select>
                             </div>
 
-                            {/* Terms & Conditions */}
-                            <label className="flex items-start gap-3 cursor-pointer group py-1">
+                            {/* Terms */}
+                            <label className="flex items-start gap-2.5 cursor-pointer py-1">
                                 <input
                                     type="checkbox"
                                     checked={agreedToTerms}
                                     onChange={(e) => setAgreedToTerms(e.target.checked)}
-                                    className="mt-0.5 w-4 h-4 rounded border-border/60 text-primary focus:ring-primary/20 cursor-pointer accent-[var(--primary)]"
+                                    className="mt-0.5 w-4 h-4 rounded accent-[#08BD80] cursor-pointer"
                                 />
-                                <span className="text-xs text-muted-foreground leading-relaxed">
-                                    I agree to the{' '}
-                                    <button className="text-primary font-medium hover:underline">Terms of Service</button>
-                                    {' '}and{' '}
-                                    <button className="text-primary font-medium hover:underline">Privacy Policy</button>
+                                <span className="text-xs text-[#6b7280] leading-relaxed">
+                                    I agree to the <button className="text-[#08BD80] font-medium hover:underline">Terms of Service</button> and <button className="text-[#08BD80] font-medium hover:underline">Privacy Policy</button>
                                 </span>
                             </label>
 
                             {/* Submit Button */}
-                            <Button
+                            <button
                                 type="button"
                                 onClick={handleSignup}
                                 disabled={isLoading}
-                                className="w-full h-12 rounded-xl bg-gradient-to-r from-secondary to-[#2d5bff] hover:from-secondary/90 hover:to-[#2d5bff]/90 text-white font-semibold text-base shadow-lg shadow-secondary/25 transition-all hover:shadow-xl hover:shadow-secondary/30"
+                                className="w-full h-12 rounded-xl bg-[#1a1a2e] hover:bg-[#2d2d44] text-white font-semibold text-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                             >
                                 {isLoading ? (
                                     <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                ) : (
-                                    <>
-                                        Create Account
-                                        <ArrowRight className="w-4 h-4 ml-1" />
-                                    </>
-                                )}
-                            </Button>
+                                ) : 'Create Account'}
+                            </button>
                         </div>
 
-                        {/* Login Link */}
-                        <div className="text-center mt-5 pt-5 border-t border-border/30">
-                            <p className="text-sm text-muted-foreground">
-                                Already have an account?{' '}
-                                <Link
-                                    to="/login"
-                                    className="text-primary font-semibold hover:underline"
-                                >
-                                    Log in
-                                </Link>
-                            </p>
+                        {/* Divider */}
+                        <div className="flex items-center gap-3 my-5">
+                            <div className="flex-1 border-t border-dashed border-[#d1d5db]" />
+                            <span className="text-xs text-[#9ca3af] font-medium">Or sign up with</span>
+                            <div className="flex-1 border-t border-dashed border-[#d1d5db]" />
                         </div>
+
+                        {/* Social buttons */}
+                        <div className="flex items-center justify-center gap-3">
+                            <button
+                                type="button"
+                                onClick={handleGoogleSignup}
+                                className="flex-1 h-12 bg-white rounded-xl border border-[#e5e7eb] hover:border-[#d1d5db] hover:shadow-sm transition-all flex items-center justify-center"
+                            >
+                                <svg className="w-5 h-5" viewBox="0 0 24 24">
+                                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
+                                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+                                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+                                </svg>
+                            </button>
+                            <button
+                                type="button"
+                                className="flex-1 h-12 bg-white rounded-xl border border-[#e5e7eb] hover:border-[#d1d5db] hover:shadow-sm transition-all flex items-center justify-center"
+                            >
+                                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="#1877F2">
+                                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                                </svg>
+                            </button>
+                            <button
+                                type="button"
+                                className="flex-1 h-12 bg-white rounded-xl border border-[#e5e7eb] hover:border-[#d1d5db] hover:shadow-sm transition-all flex items-center justify-center"
+                            >
+                                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="#000000">
+                                    <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        {/* Login link */}
+                        <p className="text-center text-sm text-[#6b7280] mt-5">
+                            Already have an account?{' '}
+                            <Link to="/login" className="font-semibold text-[#08BD80] hover:underline">
+                                Log in
+                            </Link>
+                        </p>
                     </div>
                 </div>
             </div>
