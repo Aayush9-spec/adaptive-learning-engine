@@ -6,7 +6,9 @@ const MODEL_CHAIN = ['gemini-2.0-flash-lite', 'gemini-2.0-flash', 'gemini-1.5-fl
 let currentModelIndex = 0;
 
 function getGeminiModel() {
-    const apiKey = process.env.GEMINI_API_KEY;
+    let apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) return null;
+    apiKey = apiKey.replace(/\\n/g, '').trim();
     if (!apiKey || apiKey === 'your_gemini_api_key_here') return null;
     const genAI = new GoogleGenerativeAI(apiKey);
     return genAI.getGenerativeModel({ model: MODEL_CHAIN[currentModelIndex] || MODEL_CHAIN[0] });
@@ -150,7 +152,7 @@ export default async function handler(req, res) {
 
         return res.status(404).json({ success: false, error: 'Not found' });
     } catch (err) {
-        console.error('AI API error:', err?.status || err.message);
+        console.error('AI API error details:', err);
         if (err?.status === 429) rotateModel();
 
         // Fallback
