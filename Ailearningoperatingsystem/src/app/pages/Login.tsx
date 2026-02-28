@@ -253,7 +253,8 @@ export function Login() {
                                         </div>
                                         <Input
                                             id="phone"
-                                            type="tel"
+                                            type="text"
+                                            inputMode="numeric"
                                             placeholder="Enter your phone number"
                                             value={phone}
                                             onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
@@ -263,6 +264,7 @@ export function Login() {
                                 </div>
 
                                 <Button
+                                    type="button"
                                     onClick={handleSendOTP}
                                     disabled={isLoading}
                                     className="w-full h-12 rounded-xl bg-gradient-to-r from-primary to-[#4169ff] hover:from-primary/90 hover:to-[#4169ff]/90 text-white font-semibold text-base shadow-lg shadow-primary/25 transition-all hover:shadow-xl hover:shadow-primary/30"
@@ -324,6 +326,7 @@ export function Login() {
                                 </div>
 
                                 <Button
+                                    type="button"
                                     onClick={handleVerifyOTP}
                                     disabled={isLoading}
                                     className="w-full h-12 rounded-xl bg-gradient-to-r from-primary to-[#4169ff] hover:from-primary/90 hover:to-[#4169ff]/90 text-white font-semibold text-base shadow-lg shadow-primary/25 transition-all hover:shadow-xl hover:shadow-primary/30"
@@ -387,6 +390,7 @@ export function Login() {
                                 </div>
 
                                 <Button
+                                    type="button"
                                     onClick={handleEmailLogin}
                                     disabled={isLoading}
                                     className="w-full h-12 rounded-xl bg-gradient-to-r from-primary to-[#4169ff] hover:from-primary/90 hover:to-[#4169ff]/90 text-white font-semibold text-base shadow-lg shadow-primary/25 transition-all hover:shadow-xl hover:shadow-primary/30"
