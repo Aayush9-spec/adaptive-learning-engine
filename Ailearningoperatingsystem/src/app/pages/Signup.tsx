@@ -295,7 +295,8 @@ export function Signup() {
                                         <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                                         <Input
                                             id="signup-phone"
-                                            type="tel"
+                                            type="text"
+                                            inputMode="numeric"
                                             placeholder="Phone number"
                                             value={phone}
                                             onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
@@ -374,6 +375,7 @@ export function Signup() {
 
                             {/* Submit Button */}
                             <Button
+                                type="button"
                                 onClick={handleSignup}
                                 disabled={isLoading}
                                 className="w-full h-12 rounded-xl bg-gradient-to-r from-secondary to-[#2d5bff] hover:from-secondary/90 hover:to-[#2d5bff]/90 text-white font-semibold text-base shadow-lg shadow-secondary/25 transition-all hover:shadow-xl hover:shadow-secondary/30"
