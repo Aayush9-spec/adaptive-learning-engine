@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router';
 import { BottomNav } from '../components/BottomNav';
 import { useAuth } from '../hooks/useAuth';
 import {
@@ -17,7 +18,9 @@ import {
     Lightbulb,
     Bug,
     GraduationCap,
+    ArrowLeft,
 } from 'lucide-react';
+import { TUTOR_PERSONAS } from './TutorHub';
 
 interface Message {
     role: 'user' | 'assistant';
@@ -27,6 +30,13 @@ interface Message {
 
 export function Tutor() {
     const { user } = useAuth();
+    const location = useLocation();
+    const navigate = useNavigate();
+
+    const personaId = location.state?.personaId || 'general';
+    const persona = TUTOR_PERSONAS[personaId as keyof typeof TUTOR_PERSONAS] || TUTOR_PERSONAS.general;
+    const PersonaIcon = persona.icon;
+
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -65,7 +75,7 @@ export function Tutor() {
                     'Content-Type': 'application/json',
                     Authorization: `Bearer ${token}`,
                 },
-                body: JSON.stringify({ message: messageText, history }),
+                body: JSON.stringify({ message: messageText, history, systemPrompt: persona.systemPrompt }),
             });
 
             const data = await res.json();
@@ -152,12 +162,18 @@ export function Tutor() {
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-gradient-to-br from-primary to-[#05A672] rounded-xl flex items-center justify-center shadow-md shadow-primary/20">
-                                <Bot className="w-5 h-5 text-white" />
+                            <button
+                                onClick={() => navigate('/tutor-hub')}
+                                className="mr-1 p-2 bg-muted/50 hover:bg-muted text-foreground rounded-xl transition-colors shrink-0"
+                            >
+                                <ArrowLeft className="w-5 h-5" />
+                            </button>
+                            <div className={`w-10 h-10 bg-${persona.color}-100 rounded-xl flex items-center justify-center shadow-sm`}>
+                                <PersonaIcon className={`w-5 h-5 text-${persona.color}-600`} />
                             </div>
                             <div>
-                                <h1 className="text-lg font-bold text-foreground">AI Tutor</h1>
-                                <p className="text-xs text-muted-foreground">Powered by Gemini AI</p>
+                                <h1 className="text-lg font-bold text-foreground">{persona.title}</h1>
+                                <p className="text-xs text-muted-foreground line-clamp-1">{persona.description}</p>
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
@@ -173,13 +189,13 @@ export function Tutor() {
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
                     {/* Welcome State */}
                     {messages.length === 0 && (
-                        <div className="flex flex-col items-center justify-center min-h-[60vh]">
-                            <div className="w-20 h-20 bg-gradient-to-br from-primary to-[#05A672] rounded-3xl flex items-center justify-center shadow-xl shadow-primary/20 mb-6">
-                                <Sparkles className="w-10 h-10 text-white" />
+                        <div className="flex flex-col items-center justify-center min-h-[50vh] pt-10 pb-4">
+                            <div className={`w-20 h-20 bg-${persona.color}-100 rounded-3xl flex items-center justify-center shadow-md mb-6`}>
+                                <PersonaIcon className={`w-10 h-10 text-${persona.color}-600`} />
                             </div>
-                            <h2 className="text-2xl font-bold text-foreground mb-2">Hi{user?.name ? `, ${user.name.split(' ')[0]}` : ''}! 👋</h2>
-                            <p className="text-muted-foreground text-center max-w-md mb-8">
-                                I&apos;m your AI Learning Tutor. Ask me to explain concepts, debug code, generate quizzes, or summarize any topic.
+                            <h2 className="text-2xl font-bold text-foreground mb-2 text-center">Hi{user?.name ? `, ${user.name.split(' ')[0]}` : ''}! 👋</h2>
+                            <p className="text-muted-foreground text-center max-w-md mb-8 leading-relaxed">
+                                {persona.greeting}
                             </p>
 
                             {/* Quick Prompts */}
@@ -207,8 +223,8 @@ export function Tutor() {
                             className={`flex gap-3 mb-6 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                         >
                             {msg.role === 'assistant' && (
-                                <div className="w-8 h-8 bg-gradient-to-br from-primary to-[#05A672] rounded-lg flex items-center justify-center shrink-0 mt-1">
-                                    <Bot className="w-4 h-4 text-white" />
+                                <div className={`w-8 h-8 bg-${persona.color}-100 rounded-lg flex items-center justify-center shrink-0 mt-1`}>
+                                    <PersonaIcon className={`w-4 h-4 text-${persona.color}-600`} />
                                 </div>
                             )}
 
@@ -252,8 +268,8 @@ export function Tutor() {
                     {/* Loading */}
                     {isLoading && (
                         <div className="flex gap-3 mb-6">
-                            <div className="w-8 h-8 bg-gradient-to-br from-primary to-[#05A672] rounded-lg flex items-center justify-center shrink-0">
-                                <Bot className="w-4 h-4 text-white" />
+                            <div className={`w-8 h-8 bg-${persona.color}-100 rounded-lg flex items-center justify-center shrink-0`}>
+                                <PersonaIcon className={`w-4 h-4 text-${persona.color}-600`} />
                             </div>
                             <div className="bg-card/90 backdrop-blur-md border border-white/50 shadow-sm rounded-2xl px-5 py-4">
                                 <div className="flex items-center gap-2">

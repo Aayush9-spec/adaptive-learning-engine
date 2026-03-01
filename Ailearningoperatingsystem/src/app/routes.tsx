@@ -6,6 +6,7 @@ import { Analytics } from "./pages/Analytics";
 import { AIExplainer } from "./pages/AIExplainer";
 import { Profile } from "./pages/Profile";
 import { Explore } from "./pages/Explore";
+import { TutorHub } from "./pages/TutorHub";
 import { Tutor } from "./pages/Tutor";
 import { Login } from "./pages/Login";
 import { Signup } from "./pages/Signup";
@@ -41,6 +42,14 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <Tutor />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/tutor-hub",
+    element: (
+      <ProtectedRoute>
+        <TutorHub />
       </ProtectedRoute>
     ),
   },

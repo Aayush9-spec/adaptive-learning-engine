@@ -84,17 +84,19 @@ export default async function handler(req, res) {
 
         // ─── CHAT ───
         if (action === 'chat') {
-            const { message, history } = req.body;
+            const { message, history, systemPrompt } = req.body;
             if (!message) return res.status(400).json({ success: false, error: 'Message required' });
 
             if (!model) {
                 return res.json({ success: true, response: getDemoResponse(message), model: 'demo-fallback' });
             }
 
+            const activeSystemPrompt = systemPrompt || TUTOR_SYSTEM_PROMPT;
+
             const chat = model.startChat({
                 history: [
-                    { role: 'user', parts: [{ text: 'System instructions: ' + TUTOR_SYSTEM_PROMPT }] },
-                    { role: 'model', parts: [{ text: 'Understood! I\'m ready to help as your AI Learning Tutor.' }] },
+                    { role: 'user', parts: [{ text: 'System instructions: ' + activeSystemPrompt }] },
+                    { role: 'model', parts: [{ text: 'Understood! I\'m ready to help.' }] },
                     ...(history || []).slice(-6).map(h => ({ role: h.role === 'assistant' ? 'model' : 'user', parts: [{ text: h.content }] })),
                 ],
             });

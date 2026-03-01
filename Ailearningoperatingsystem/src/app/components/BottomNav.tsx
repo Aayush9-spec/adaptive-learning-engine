@@ -8,7 +8,7 @@ export function BottomNav() {
   const navItems = [
     { path: '/', icon: Compass, label: 'Command' },
     { path: '/explore', icon: BookOpen, label: 'Explore' },
-    { path: '/tutor', icon: Bot, label: 'AI Tutor' },
+    { path: '/tutor-hub', icon: Bot, label: 'AI Tutor' },
     { path: '/gps', icon: Target, label: 'GPS' },
     { path: '/flow', icon: Brain, label: 'Flow' },
     { path: '/analytics', icon: TrendingUp, label: 'Analytics' },
