@@ -193,6 +193,17 @@ Priority_Score = (Exam_Weightage × Importance_Factor) /
 4. Reserve 20% for revision (spaced repetition)
 5. Ensure no topic exceeds 50% of daily time
 
+## 📦 Submission Layout
+
+The final submission artifacts are available at repository root:
+
+- `backend/lambda_function.py` - AWS Lambda decision engine
+- `backend/requirements.txt` - backend Python dependencies
+- `frontend/lib/api.js` - frontend API client with offline-first helper
+- `frontend/.env.example` - required frontend environment variable
+- `DEPLOYMENT.md` - end-to-end deployment and demo checklist
+- `ARCHITECTURE.md` - production-demo architecture explanation
+
 ## 👥 User Roles
 
 ### Students
