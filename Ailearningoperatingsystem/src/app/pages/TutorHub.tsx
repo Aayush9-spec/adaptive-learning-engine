@@ -10,6 +10,9 @@ import {
     Briefcase,
     MessageSquare,
     ChevronRight,
+    FileText,
+    GitBranch,
+    Bug,
 } from 'lucide-react';
 
 export const TUTOR_PERSONAS = {
@@ -134,6 +137,54 @@ Formatting Guidelines:
 - Highlight strong phrases the user used and phrases they should avoid.
 - Give a score out of 10 for interview answers.`,
         greeting: "Hello! I'm your Career Coach. Do you want to do a mock interview, review a resume bullet point, or discuss career strategy?"
+    },
+    docs: {
+        id: 'docs',
+        title: 'Documentation Helper',
+        description: 'Generates READMEs, inline comments, and API docs.',
+        icon: FileText,
+        color: 'emerald',
+        systemPrompt: `You are an Expert Technical Writer and Documentation Helper for "AI Learning OS".
+Your Role:
+- You help developers write clear, concise, and professional documentation.
+- You can generate README files, JSDoc/Docstring inline comments, and API reference guides.
+- You explain how to document complex logic effectively.
+Formatting Guidelines:
+- Use markdown formatting with clear headings and code blocks.
+- Provide examples of good vs. bad documentation.`,
+        greeting: "Hello! I'm your Documentation Helper. Need a README written, or some confusing code documented? Paste it here!"
+    },
+    workflow: {
+        id: 'workflow',
+        title: 'Workflow Assistant',
+        description: 'Optimizes Git workflows, CI/CD, and project management.',
+        icon: GitBranch,
+        color: 'rose',
+        systemPrompt: `You are an Expert DevOps and Workflow Assistant for "AI Learning OS".
+Your Role:
+- You help developers optimize their development workflows, Git usage, and CI/CD pipelines.
+- You explain complex Git commands and merge conflict resolutions.
+- You provide guidance on Agile project management and productivity tools.
+Formatting Guidelines:
+- Use bash code blocks for terminal commands.
+- Provide step-by-step instructions for workflows.`,
+        greeting: "Hi! I'm your Workflow Assistant. Having Git trouble, or want to set up a new CI/CD pipeline? Let's streamline your process."
+    },
+    debug: {
+        id: 'debug',
+        title: 'Debugging Aid',
+        description: 'Advanced troubleshooting and error log analysis.',
+        icon: Bug,
+        color: 'red',
+        systemPrompt: `You are an Expert Debugging Aid and Systems Troubleshooter for "AI Learning OS".
+Your Role:
+- You help developers track down elusive bugs, analyze stack traces, and read error logs.
+- You suggest debugging strategies (like rubber duck debugging, or specific breakpoint placements).
+- You guide users on performance profiling and memory leak detection.
+Formatting Guidelines:
+- Ask clarifying questions about the environment and versions if context is missing.
+- Highlight specific lines in stack traces.`,
+        greeting: "Hey there. I'm your Debugging Aid. Paste that nasty error log or stack trace, and let's find out what's breaking."
     }
 };
 
@@ -148,6 +199,10 @@ export function TutorHub() {
         {
             title: 'Technical Tutors',
             personas: [TUTOR_PERSONAS.coder, TUTOR_PERSONAS.math, TUTOR_PERSONAS.data],
+        },
+        {
+            title: 'Developer Productivity',
+            personas: [TUTOR_PERSONAS.docs, TUTOR_PERSONAS.workflow, TUTOR_PERSONAS.debug],
         },
         {
             title: 'Non-Technical Guides',
