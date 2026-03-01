@@ -3,8 +3,6 @@ import os
 import re
 import hashlib
 import time
-import urllib.error
-import urllib.request
 from datetime import datetime
 
 import boto3
@@ -21,8 +19,7 @@ NOTEBOOK_TABLE = os.environ.get("NOTEBOOK_TABLE", "ConceptNotebook")
 MISTAKE_LOGS_TABLE = os.environ.get("MISTAKE_LOGS_TABLE", "MistakeLogs")
 MEMORY_TABLE = os.environ.get("MEMORY_TABLE", "UserLearningMemory")
 AI_CACHE_TABLE = os.environ.get("AI_CACHE_TABLE", "AICache")
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
-OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
+USAGE_TABLE = os.environ.get("USAGE_TABLE", "UserUsage")
 BEDROCK_MODEL_ID = os.environ.get(
     "BEDROCK_MODEL_ID", "anthropic.claude-3-haiku-20240307-v1:0"
 )
@@ -35,6 +32,7 @@ notebook_table = dynamodb.Table(NOTEBOOK_TABLE)
 mistake_logs_table = dynamodb.Table(MISTAKE_LOGS_TABLE)
 memory_table = dynamodb.Table(MEMORY_TABLE)
 cache_table = dynamodb.Table(AI_CACHE_TABLE)
+usage_table = dynamodb.Table(USAGE_TABLE)
 
 MISTAKE_CATEGORIES = {
     "conceptual",
@@ -43,6 +41,36 @@ MISTAKE_CATEGORIES = {
     "application_logic",
     "exam_trap",
 }
+
+TIER_RANK = {"free": 0, "pro": 1, "elite": 2}
+TIER_DAILY_LIMITS = {"free": 5, "pro": 50, "elite": 200}
+
+
+class UsageLimitExceeded(Exception):
+    pass
+
+
+def log_event(level, event_name, **context):
+    payload = {
+        "ts": datetime.utcnow().isoformat() + "Z",
+        "level": level,
+        "event": event_name,
+        **context,
+    }
+    print(json.dumps(payload, default=str))
+
+
+def normalize_tier(subscription_tier):
+    tier = str(subscription_tier or "free").strip().lower()
+    return tier if tier in TIER_RANK else "free"
+
+
+def has_tier_access(current_tier, required_tier):
+    return TIER_RANK.get(normalize_tier(current_tier), 0) >= TIER_RANK.get(required_tier, 0)
+
+
+def get_ai_limit_for_tier(subscription_tier):
+    return TIER_DAILY_LIMITS.get(normalize_tier(subscription_tier), 5)
 
 
 def build_cache_key(request_type, user_id, concept_id, mastery, extra=None):
@@ -61,10 +89,13 @@ def get_cached_response(cache_key):
     result = cache_table.get_item(Key={"cache_key": cache_key})
     item = result.get("Item")
     if not item:
+        log_event("debug", "cache_miss", cache_key=cache_key)
         return None
     ttl = int(item.get("ttl", 0))
     if ttl and ttl <= int(time.time()):
+        log_event("debug", "cache_expired", cache_key=cache_key)
         return None
+    log_event("info", "cache_hit", cache_key=cache_key)
     return item
 
 
@@ -77,6 +108,73 @@ def save_to_cache(cache_key, response_text, hours=6):
             "ttl": ttl,
         }
     )
+    log_event("info", "cache_saved", cache_key=cache_key, ttl=ttl)
+
+
+def check_and_increment_usage(user_id, limit=20):
+    today = datetime.utcnow().strftime("%Y-%m-%d")
+
+    result = usage_table.get_item(Key={"user_id": user_id})
+    item = result.get("Item")
+
+    if not item or item.get("last_reset_date") != today:
+        usage_table.put_item(
+            Item={
+                "user_id": user_id,
+                "daily_calls": 1,
+                "last_reset_date": today,
+            }
+        )
+        return True
+
+    daily_calls = int(item.get("daily_calls", 0))
+    if daily_calls >= limit:
+        return False
+
+    usage_table.update_item(
+        Key={"user_id": user_id},
+        UpdateExpression="SET daily_calls = daily_calls + :inc",
+        ExpressionAttributeValues={":inc": 1},
+    )
+    return True
+
+
+def invoke_bedrock_text(user_id, prompt, max_tokens, subscription_tier="free"):
+    limit = get_ai_limit_for_tier(subscription_tier)
+    if not check_and_increment_usage(user_id, limit=limit):
+        log_event(
+            "warn",
+            "usage_limit_exceeded",
+            user_id=user_id,
+            tier=subscription_tier,
+            daily_limit=limit,
+        )
+        raise UsageLimitExceeded("Upgrade plan to continue")
+
+    body = {
+        "anthropic_version": "bedrock-2023-05-31",
+        "messages": [
+            {
+                "role": "user",
+                "content": [{"type": "text", "text": prompt}],
+            }
+        ],
+        "max_tokens": max_tokens,
+    }
+    response = bedrock.invoke_model(modelId=BEDROCK_MODEL_ID, body=json.dumps(body))
+    result = json.loads(response["body"].read())
+    content = result.get("content", [])
+    if content and isinstance(content, list):
+        log_event(
+            "info",
+            "bedrock_invoke_ok",
+            user_id=user_id,
+            tier=subscription_tier,
+            max_tokens=max_tokens,
+        )
+        return content[0].get("text", "").strip()
+    log_event("warn", "bedrock_empty_response", user_id=user_id, tier=subscription_tier)
+    return ""
 
 
 def json_response(status_code, body):
@@ -206,7 +304,7 @@ def update_mastery(user_id, concept_id, quiz_score):
     return safe_quiz_score
 
 
-def classify_mistake(question, student_answer, correct_answer):
+def classify_mistake(user_id, question, student_answer, correct_answer, subscription_tier="free"):
     prompt = (
         "You are an expert exam error analyst.\n\n"
         f"Question: {question}\n"
@@ -221,27 +319,16 @@ def classify_mistake(question, student_answer, correct_answer):
         "Return only the category token, no extra text.\n"
     )
 
-    body = {
-        "anthropic_version": "bedrock-2023-05-31",
-        "messages": [
-            {
-                "role": "user",
-                "content": [{"type": "text", "text": prompt}],
-            }
-        ],
-        "max_tokens": 100,
-    }
-
-    response = bedrock.invoke_model(
-        modelId=BEDROCK_MODEL_ID,
-        body=json.dumps(body),
+    ai_text = invoke_bedrock_text(
+        user_id=user_id,
+        prompt=prompt,
+        max_tokens=100,
+        subscription_tier=subscription_tier,
     )
-    result = json.loads(response["body"].read())
-    content = result.get("content", [])
-    if not content or not isinstance(content, list):
+    if not ai_text:
         return "conceptual"
 
-    category = (content[0].get("text", "") or "").strip().lower()
+    category = ai_text.strip().lower()
     category = re.sub(r"[^a-z_]", "", category)
     if category in MISTAKE_CATEGORIES:
         return category
@@ -355,38 +442,6 @@ def upsert_notebook(user_id, concept_id, notes, mistakes, ai_summary):
     return item
 
 
-def call_openai(prompt):
-    if not OPENAI_API_KEY:
-        return None
-
-    payload = {
-        "model": OPENAI_MODEL,
-        "messages": [
-            {"role": "system", "content": "You are an exam-focused learning assistant."},
-            {"role": "user", "content": prompt},
-        ],
-        "temperature": 0.2,
-    }
-    req = urllib.request.Request(
-        "https://api.openai.com/v1/chat/completions",
-        data=json.dumps(payload).encode("utf-8"),
-        headers={
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {OPENAI_API_KEY}",
-        },
-        method="POST",
-    )
-    try:
-        with urllib.request.urlopen(req, timeout=12) as response:
-            result = json.loads(response.read().decode("utf-8"))
-            choices = result.get("choices", [])
-            if not choices:
-                return None
-            return choices[0].get("message", {}).get("content", "").strip() or None
-    except (urllib.error.URLError, TimeoutError, ValueError, KeyError):
-        return None
-
-
 def fallback_summary(concept_id, notes, mistakes, mastery, weak_prereqs):
     traps = ", ".join(mistakes[:3]) if mistakes else "common sign and substitution errors"
     weak = ", ".join(weak_prereqs) if weak_prereqs else "none"
@@ -398,7 +453,7 @@ def fallback_summary(concept_id, notes, mistakes, mastery, weak_prereqs):
     )
 
 
-def generate_ai_summary(user_id, concept_id, notes, mistakes):
+def generate_ai_summary(user_id, concept_id, notes, mistakes, subscription_tier="free"):
     concept = concepts_table.get_item(Key={"concept_id": concept_id}).get("Item", {})
     mastery_item = progress_table.get_item(
         Key={"user_id": user_id, "concept_id": concept_id}
@@ -408,17 +463,40 @@ def generate_ai_summary(user_id, concept_id, notes, mistakes):
     mastery_lookup = get_mastery_lookup(get_user_progress(user_id))
     weak_prereqs = [p for p in prereqs if mastery_lookup.get(p, 0) < 50]
 
+    cache_key = build_cache_key(
+        request_type="concept-summary",
+        user_id=user_id,
+        concept_id=concept_id,
+        mastery=mastery,
+    )
+    cached = get_cached_response(cache_key)
+    if cached:
+        return cached.get("response", "")
+
     prompt = (
-        "Summarize this concept in about 200 words for JEE preparation. "
-        "Focus on exam traps and simple explanation.\n"
+        "You are an exam-focused JEE tutor.\n\n"
+        "Create a concise and reliable summary using this exact structure:\n"
+        "1) Concept in one line\n"
+        "2) Key idea bullets (max 4)\n"
+        "3) Exam trap warning\n"
+        "4) Quick revision checklist (3 items)\n\n"
         f"Concept: {concept_id}\n"
         f"Topic: {concept.get('topic', concept_id)}\n"
-        f"User mastery: {mastery}\n"
+        f"User mastery: {mastery}/100\n"
         f"Weak prerequisites: {weak_prereqs}\n"
         f"User notes: {notes or ''}\n"
         f"User mistakes: {mistakes or []}\n"
     )
-    return call_openai(prompt) or fallback_summary(concept_id, notes, mistakes or [], mastery, weak_prereqs)
+    ai_text = invoke_bedrock_text(
+        user_id=user_id,
+        prompt=prompt,
+        max_tokens=450,
+        subscription_tier=subscription_tier,
+    )
+    if ai_text:
+        save_to_cache(cache_key, ai_text, hours=6)
+        return ai_text
+    return fallback_summary(concept_id, notes, mistakes or [], mastery, weak_prereqs)
 
 
 def build_ai_context(user_id, concept_id):
@@ -463,7 +541,7 @@ def build_ai_context(user_id, concept_id):
     }
 
 
-def generate_ai_help(context):
+def generate_ai_help(context, subscription_tier="free"):
     cache_key = build_cache_key(
         request_type="ai-help",
         user_id=context.get("user_id", ""),
@@ -485,7 +563,13 @@ def generate_ai_help(context):
     mistakes_line = ", ".join(mistakes[:5]) if mistakes else "none recorded"
 
     prompt = (
-        "You are an expert JEE tutor.\n\n"
+        "You are an expert JEE tutor.\n"
+        "Return consistent output using these sections only:\n"
+        "EXPLANATION\n"
+        "PREREQUISITE_FIX\n"
+        "EXAM_TRAP\n"
+        "PRACTICE_QUESTIONS\n"
+        "DIAGRAM_GUIDE\n\n"
         f"Topic: {context.get('topic', '')}\n"
         f"Student Mastery: {context.get('mastery', 50)}/100\n"
         f"Exam Weight Importance: {context.get('exam_weight', 5)}/10\n"
@@ -496,37 +580,22 @@ def generate_ai_help(context):
         "Prerequisite Performance:\n"
         f"{prereq_lines}\n\n"
         "Instructions:\n"
-        "1. Explain the topic in simple language.\n"
-        "2. Focus on areas likely misunderstood.\n"
-        "3. If prerequisites are weak, reinforce them.\n"
-        "4. Provide one exam trap warning.\n"
-        "5. Provide 3 conceptual practice questions.\n"
-        "6. Suggest a simple diagram structure description for visualization.\n"
+        "- Explain in simple language.\n"
+        "- Reinforce weak prerequisites first.\n"
+        "- Include one exam trap warning.\n"
+        "- Add exactly 3 conceptual practice questions.\n"
+        "- Add a simple diagram structure description.\n"
     )
 
-    body = {
-        "anthropic_version": "bedrock-2023-05-31",
-        "messages": [
-            {
-                "role": "user",
-                "content": [{"type": "text", "text": prompt}],
-            }
-        ],
-        "max_tokens": 700,
-    }
-
-    response = bedrock.invoke_model(
-        modelId=BEDROCK_MODEL_ID,
-        body=json.dumps(body),
+    ai_text = invoke_bedrock_text(
+        user_id=context.get("user_id", ""),
+        prompt=prompt,
+        max_tokens=700,
+        subscription_tier=subscription_tier,
     )
-    result = json.loads(response["body"].read())
-    content = result.get("content", [])
-    if content and isinstance(content, list):
-        ai_text = content[0].get("text", "").strip()
-        if ai_text:
-            save_to_cache(cache_key, ai_text, hours=6)
-        return ai_text
-    return ""
+    if ai_text:
+        save_to_cache(cache_key, ai_text, hours=6)
+    return ai_text
 
 
 def build_question_strategy(context):
@@ -545,7 +614,7 @@ def build_question_strategy(context):
     return {"difficulty": difficulty, "focus": focus}
 
 
-def generate_questions(context):
+def generate_questions(context, subscription_tier="free"):
     strategy = build_question_strategy(context)
     cache_key = build_cache_key(
         request_type="generate-questions",
@@ -575,6 +644,12 @@ def generate_questions(context):
         f"Exam Weight: {context.get('exam_weight', 5)}/10\n"
         "Prerequisite Performance:\n"
         f"{prereq_lines}\n\n"
+        "Output format (strict):\n"
+        "CONCEPTUAL_QUESTIONS\n"
+        "APPLICATION_PROBLEMS\n"
+        "TRAP_QUESTION\n"
+        "DIAGRAM_QUESTION\n"
+        "DIAGRAM_DATA\n\n"
         "Generate:\n"
         "- 2 conceptual questions\n"
         "- 2 numerical/application problems\n"
@@ -596,29 +671,15 @@ def generate_questions(context):
         "- Ensure problems are unique and not generic\n"
     )
 
-    body = {
-        "anthropic_version": "bedrock-2023-05-31",
-        "messages": [
-            {
-                "role": "user",
-                "content": [{"type": "text", "text": prompt}],
-            }
-        ],
-        "max_tokens": 900,
-    }
-
-    response = bedrock.invoke_model(
-        modelId=BEDROCK_MODEL_ID,
-        body=json.dumps(body),
+    ai_text = invoke_bedrock_text(
+        user_id=context.get("user_id", ""),
+        prompt=prompt,
+        max_tokens=900,
+        subscription_tier=subscription_tier,
     )
-    result = json.loads(response["body"].read())
-    content = result.get("content", [])
-    if content and isinstance(content, list):
-        ai_text = content[0].get("text", "").strip()
-        if ai_text:
-            save_to_cache(cache_key, ai_text, hours=6)
-        return ai_text
-    return ""
+    if ai_text:
+        save_to_cache(cache_key, ai_text, hours=6)
+    return ai_text
 
 
 def extract_diagram_data(ai_text):
@@ -694,7 +755,7 @@ def analyze_performance(user_id):
     }
 
 
-def generate_strategy_report(user_id):
+def generate_strategy_report(user_id, subscription_tier="free"):
     performance = analyze_performance(user_id)
     cache_key = build_cache_key(
         request_type="ai-strategy",
@@ -713,6 +774,12 @@ def generate_strategy_report(user_id):
 
     prompt = (
         "You are an AI exam strategist.\n\n"
+        "Return structured output with sections:\n"
+        "READINESS\n"
+        "RISK_LEVEL\n"
+        "FIVE_DAY_PLAN\n"
+        "TIME_ALLOCATION\n"
+        "CONFIDENCE_GUIDANCE\n\n"
         "Performance Data:\n"
         f"{performance}\n\n"
         "Provide:\n"
@@ -724,28 +791,18 @@ def generate_strategy_report(user_id):
         "Be concise but strategic.\n"
     )
 
-    body = {
-        "anthropic_version": "bedrock-2023-05-31",
-        "messages": [
-            {
-                "role": "user",
-                "content": [{"type": "text", "text": prompt}],
-            }
-        ],
-        "max_tokens": 700,
-    }
-    response = bedrock.invoke_model(modelId=BEDROCK_MODEL_ID, body=json.dumps(body))
-    result = json.loads(response["body"].read())
-    content = result.get("content", [])
-    if content and isinstance(content, list):
-        ai_text = content[0].get("text", "").strip()
-        if ai_text:
-            save_to_cache(cache_key, ai_text, hours=6)
-        return ai_text
-    return ""
+    ai_text = invoke_bedrock_text(
+        user_id=user_id,
+        prompt=prompt,
+        max_tokens=700,
+        subscription_tier=subscription_tier,
+    )
+    if ai_text:
+        save_to_cache(cache_key, ai_text, hours=6)
+    return ai_text
 
 
-def update_learning_memory(user_id):
+def update_learning_memory(user_id, subscription_tier="free"):
     performance = analyze_performance(user_id)
     recent_logs = mistake_logs_table.query(
         KeyConditionExpression=Key("user_id").eq(user_id),
@@ -769,19 +826,12 @@ def update_learning_memory(user_id):
         f"Recent mistake category counts: {category_counts}\n"
     )
 
-    body = {
-        "anthropic_version": "bedrock-2023-05-31",
-        "messages": [
-            {
-                "role": "user",
-                "content": [{"type": "text", "text": prompt}],
-            }
-        ],
-        "max_tokens": 500,
-    }
-
-    response = bedrock.invoke_model(modelId=BEDROCK_MODEL_ID, body=json.dumps(body))
-    summary = json.loads(response["body"].read()).get("content", [{}])[0].get("text", "").strip()
+    summary = invoke_bedrock_text(
+        user_id=user_id,
+        prompt=prompt,
+        max_tokens=500,
+        subscription_tier=subscription_tier,
+    )
 
     memory_table.put_item(
         Item={
@@ -796,23 +846,41 @@ def update_learning_memory(user_id):
 
 
 def lambda_handler(event, context):
+    request_id = getattr(context, "aws_request_id", "local")
     method = event.get("requestContext", {}).get("http", {}).get("method", "")
+    path = event.get("rawPath", "")
+    log_event("info", "request_received", request_id=request_id, method=method, path=path)
     if method == "OPTIONS":
         return json_response(200, {"ok": True})
 
     try:
         payload = parse_event(event)
     except (json.JSONDecodeError, ValueError):
+        log_event("warn", "invalid_json_body", request_id=request_id, path=path)
         return json_response(400, {"error": "Invalid JSON body"})
 
-    path = event.get("rawPath", "")
     user_id = payload.get("user_id")
     if not user_id:
+        log_event("warn", "missing_user_id", request_id=request_id, path=path)
         return json_response(400, {"error": "user_id is required"})
 
-    user = users_table.get_item(Key={"user_id": user_id}).get("Item")
+    try:
+        user = users_table.get_item(Key={"user_id": user_id}).get("Item")
+    except Exception as error:
+        log_event("error", "users_lookup_failed", request_id=request_id, user_id=user_id, path=path, message=str(error))
+        return json_response(500, {"error": "User lookup failed"})
     if not user:
+        log_event("warn", "user_not_found", request_id=request_id, user_id=user_id, path=path)
         return json_response(404, {"error": f"User '{user_id}' not found"})
+    subscription_tier = normalize_tier(user.get("subscription_tier", "free"))
+    log_event(
+        "info",
+        "request_user_context",
+        request_id=request_id,
+        user_id=user_id,
+        path=path,
+        subscription_tier=subscription_tier,
+    )
 
     if path == "/recommend":
         recommendations = generate_recommendations(user_id)
@@ -844,25 +912,36 @@ def lambda_handler(event, context):
         student_answer = payload.get("student_answer")
         correct_answer = payload.get("correct_answer")
         if question and student_answer is not None and correct_answer is not None:
-            try:
-                mistake_category = classify_mistake(question, student_answer, correct_answer)
-                logged_mistake = store_mistake_log(
-                    user_id=user_id,
-                    concept_id=concept_id,
-                    question_type=payload.get("question_type", "quiz"),
-                    mistake_category=mistake_category,
-                    confidence_level=payload.get("confidence_level"),
-                    time_taken=payload.get("time_taken"),
-                )
-                update_progress_after_mistake(
-                    user_id=user_id,
-                    concept_id=concept_id,
-                    mistake_category=mistake_category,
-                    confidence_level=payload.get("confidence_level"),
-                    time_taken=payload.get("time_taken"),
-                )
-            except Exception:
-                logged_mistake = None
+            if not has_tier_access(subscription_tier, "pro"):
+                logged_mistake = {"error": "Upgrade to Pro for weakness classifier"}
+            else:
+                try:
+                    mistake_category = classify_mistake(
+                        user_id,
+                        question,
+                        student_answer,
+                        correct_answer,
+                        subscription_tier=subscription_tier,
+                    )
+                    logged_mistake = store_mistake_log(
+                        user_id=user_id,
+                        concept_id=concept_id,
+                        question_type=payload.get("question_type", "quiz"),
+                        mistake_category=mistake_category,
+                        confidence_level=payload.get("confidence_level"),
+                        time_taken=payload.get("time_taken"),
+                    )
+                    update_progress_after_mistake(
+                        user_id=user_id,
+                        concept_id=concept_id,
+                        mistake_category=mistake_category,
+                        confidence_level=payload.get("confidence_level"),
+                        time_taken=payload.get("time_taken"),
+                    )
+                except UsageLimitExceeded:
+                    logged_mistake = {"error": "Upgrade plan to continue"}
+                except Exception:
+                    logged_mistake = None
 
         recommendations = generate_recommendations(user_id)
         date, top_recommendations = save_study_plan(user_id, recommendations)
@@ -875,6 +954,7 @@ def lambda_handler(event, context):
                 "date": date,
                 "updated_plan": top_recommendations,
                 "mistake_log": logged_mistake,
+                "subscription_tier": subscription_tier,
             },
         )
 
@@ -905,7 +985,26 @@ def lambda_handler(event, context):
         mistakes = payload.get("mistakes", notebook.get("mistakes", []))
         if not isinstance(mistakes, list):
             return json_response(400, {"error": "mistakes must be a list"})
-        ai_summary = generate_ai_summary(user_id, concept_id, notes, mistakes)
+        try:
+            ai_summary = generate_ai_summary(
+                user_id,
+                concept_id,
+                notes,
+                mistakes,
+                subscription_tier=subscription_tier,
+            )
+        except UsageLimitExceeded:
+            return json_response(429, {"error": "Upgrade plan to continue"})
+        except Exception as error:
+            log_event(
+                "error",
+                "notebook_summarize_failed",
+                request_id=request_id,
+                user_id=user_id,
+                concept_id=concept_id,
+                message=str(error),
+            )
+            return json_response(502, {"error": "summary_generation_failed"})
         item = upsert_notebook(user_id, concept_id, notes, mistakes, ai_summary)
         return json_response(
             200,
@@ -924,7 +1023,9 @@ def lambda_handler(event, context):
         context = build_ai_context(user_id, concept_id)
 
         try:
-            ai_response = generate_ai_help(context)
+            ai_response = generate_ai_help(context, subscription_tier=subscription_tier)
+        except UsageLimitExceeded:
+            return json_response(429, {"error": "Upgrade plan to continue"})
         except Exception as error:
             return json_response(
                 502,
@@ -942,6 +1043,7 @@ def lambda_handler(event, context):
                 "context": context,
                 "ai_response": ai_response,
                 "ai_explanation": ai_response,
+                "subscription_tier": subscription_tier,
             },
         )
 
@@ -952,7 +1054,9 @@ def lambda_handler(event, context):
 
         context = build_ai_context(user_id, concept_id)
         try:
-            questions = generate_questions(context)
+            questions = generate_questions(context, subscription_tier=subscription_tier)
+        except UsageLimitExceeded:
+            return json_response(429, {"error": "Upgrade plan to continue"})
         except Exception as error:
             return json_response(
                 502,
@@ -969,6 +1073,7 @@ def lambda_handler(event, context):
                 "strategy": build_question_strategy(context),
                 "questions": questions,
                 "diagram_data": extract_diagram_data(questions),
+                "subscription_tier": subscription_tier,
             },
         )
 
@@ -977,9 +1082,13 @@ def lambda_handler(event, context):
         return json_response(200, report)
 
     if path == "/trend-report":
+        if not has_tier_access(subscription_tier, "pro"):
+            return json_response(403, {"error": "Upgrade to Pro for trend prediction"})
         return json_response(200, {"trajectory": calculate_trend(user_id)})
 
     if path == "/classify-mistake":
+        if not has_tier_access(subscription_tier, "pro"):
+            return json_response(403, {"error": "Upgrade to Pro for weakness classifier"})
         concept_id = payload.get("concept_id")
         question = payload.get("question")
         student_answer = payload.get("student_answer")
@@ -993,7 +1102,13 @@ def lambda_handler(event, context):
             )
 
         try:
-            mistake_category = classify_mistake(question, student_answer, correct_answer)
+            mistake_category = classify_mistake(
+                user_id,
+                question,
+                student_answer,
+                correct_answer,
+                subscription_tier=subscription_tier,
+            )
             logged = store_mistake_log(
                 user_id=user_id,
                 concept_id=concept_id,
@@ -1016,6 +1131,8 @@ def lambda_handler(event, context):
                     "mistake_log": logged,
                 },
             )
+        except UsageLimitExceeded:
+            return json_response(429, {"error": "Upgrade plan to continue"})
         except Exception as error:
             return json_response(
                 502,
@@ -1026,8 +1143,12 @@ def lambda_handler(event, context):
             )
 
     if path == "/ai-strategy":
+        if not has_tier_access(subscription_tier, "pro"):
+            return json_response(403, {"error": "Upgrade to Pro for AI strategy planner"})
         try:
-            strategy = generate_strategy_report(user_id)
+            strategy = generate_strategy_report(user_id, subscription_tier=subscription_tier)
+        except UsageLimitExceeded:
+            return json_response(429, {"error": "Upgrade plan to continue"})
         except Exception as error:
             return json_response(
                 502,
@@ -1039,9 +1160,13 @@ def lambda_handler(event, context):
         return json_response(200, {"strategy": strategy})
 
     if path == "/update-learning-memory":
+        if not has_tier_access(subscription_tier, "elite"):
+            return json_response(403, {"error": "Upgrade to Elite for deep learning memory"})
         try:
-            memory = update_learning_memory(user_id)
+            memory = update_learning_memory(user_id, subscription_tier=subscription_tier)
             return json_response(200, memory)
+        except UsageLimitExceeded:
+            return json_response(429, {"error": "Upgrade plan to continue"})
         except Exception as error:
             return json_response(
                 502,
@@ -1052,10 +1177,13 @@ def lambda_handler(event, context):
             )
 
     if path == "/learning-memory":
+        if not has_tier_access(subscription_tier, "elite"):
+            return json_response(403, {"error": "Upgrade to Elite for deep learning memory"})
         memory_type = payload.get("memory_type", "learning_profile")
         memory = memory_table.get_item(
             Key={"user_id": user_id, "memory_type": memory_type}
         ).get("Item", {})
         return json_response(200, memory)
 
+    log_event("warn", "invalid_route", request_id=request_id, user_id=user_id, path=path)
     return json_response(400, {"error": "Invalid route"})

@@ -50,18 +50,24 @@
   - `MistakeLogs` (`PK: user_id`, `SK: timestamp`)
   - `UserLearningMemory` (`PK: user_id`, `SK: memory_type`)
   - `AICache` (`PK: cache_key`, attributes: `response`, `ttl`)
+  - `UserUsage` (`PK: user_id`, attributes: `daily_calls`, `last_reset_date`)
 - Billing mode: `On-Demand`
 
 For `AICache`, enable DynamoDB TTL on attribute: `ttl`.
+
+Usage guard:
+- AI routes return `429` when daily limit is reached for a user.
+- Default limit in code: `20` Bedrock calls/day/user.
 
 ## 2. Data Integrity Checks
 
 - Demo user exists:
 ```json
-{ "user_id": "user123" }
+{ "user_id": "user123", "subscription_tier": "free" }
 ```
 - At least 5 concepts exist with valid prerequisites.
 - Progress records exist with varied mastery levels (include at least one blocked advanced concept).
+- `Users.subscription_tier` set for test accounts (`free`, `pro`, `elite`) to validate feature gates.
 
 ## 3. Backend Functional Tests
 

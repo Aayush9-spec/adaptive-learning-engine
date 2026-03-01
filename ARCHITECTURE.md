@@ -120,6 +120,10 @@ This keeps backend stateless while improving UX and reducing API calls.
   - `PK: cache_key`
   - `response, ttl`
   - used to reduce repeated Bedrock calls for same request context
+- `UserUsage`
+  - `PK: user_id`
+  - `daily_calls, last_reset_date`
+  - enforces per-user AI daily cap for cost control
 
 ## Cost Profile
 

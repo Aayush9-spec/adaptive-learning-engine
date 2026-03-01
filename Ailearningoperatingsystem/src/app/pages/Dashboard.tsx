@@ -1,5 +1,8 @@
 import { BottomNav } from '../components/BottomNav';
 import { Footer } from '../components/Footer';
+import { MasteryHeatmap } from '../components/MasteryHeatmap';
+import { AIStrategyPanel } from '../components/AIStrategyPanel';
+import { LearningPathVisualization } from '../components/LearningPathVisualization';
 import { useNavigate } from 'react-router';
 import { useAuth } from '../hooks/useAuth';
 import {
@@ -56,6 +59,29 @@ export function Dashboard() {
     { title: 'Complete Python Bootcamp', educator: 'Dr. Priya Sharma', rating: 4.9, students: '12K+', lessons: 156, tag: 'Bestseller' },
     { title: 'Data Structures & Algorithms', educator: 'Prof. Rajesh Kumar', rating: 4.8, students: '8.9K+', lessons: 210, tag: 'Popular' },
     { title: 'Machine Learning Masterclass', educator: 'Dr. Ananya Verma', rating: 4.7, students: '6.3K+', lessons: 124, tag: 'New' },
+  ];
+
+  const masteryData = [
+    { concept: 'Limits', mastery: 80 },
+    { concept: 'Continuity', mastery: 62 },
+    { concept: 'Differentiation', mastery: 42 },
+    { concept: 'Applications of Derivatives', mastery: 25 },
+    { concept: 'Integration', mastery: 20 },
+  ];
+
+  const strategyPlan = [
+    'Day 1-2: Fix continuity and derivative rule confusion.',
+    'Day 3: Solve 20 medium differentiation applications.',
+    'Day 4: Start integration with guided examples and traps.',
+    'Day 5: Timed mixed test and error review notebook update.',
+  ];
+
+  const dependencyNodes = [
+    { id: 1, title: 'Limits', status: 'completed' as const, position: { x: 12, y: 20 }, skillGain: 8 },
+    { id: 2, title: 'Continuity', status: 'current' as const, position: { x: 32, y: 38 }, skillGain: 9 },
+    { id: 3, title: 'Differentiation', status: 'next' as const, position: { x: 52, y: 52 }, skillGain: 12 },
+    { id: 4, title: 'Applications', status: 'locked' as const, position: { x: 74, y: 40 }, skillGain: 10 },
+    { id: 5, title: 'Integration', status: 'locked' as const, position: { x: 88, y: 62 }, skillGain: 11 },
   ];
 
   return (
@@ -191,6 +217,34 @@ export function Dashboard() {
             </div>
           ))}
         </div>
+
+        {/* Learning Intelligence */}
+        <section>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold text-foreground">Learning Intelligence</h2>
+            <button
+              onClick={() => navigate('/analytics')}
+              className="text-sm text-primary font-medium hover:underline"
+            >
+              View Full Analytics
+            </button>
+          </div>
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+            <div className="xl:col-span-2">
+              <MasteryHeatmap data={masteryData} />
+            </div>
+            <AIStrategyPanel readiness={68} risk="Medium" plan={strategyPlan} />
+          </div>
+        </section>
+
+        {/* Concept Dependency Graph */}
+        <section>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold text-foreground">Concept Dependency Graph</h2>
+            <p className="text-xs text-muted-foreground">Syllabus-aware progression map</p>
+          </div>
+          <LearningPathVisualization nodes={dependencyNodes} />
+        </section>
 
         {/* Watch Free Online Classes — Unacademy's Live Section */}
         <section>

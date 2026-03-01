@@ -203,6 +203,9 @@ The final submission artifacts are available at repository root:
 - `frontend/.env.example` - required frontend environment variable
 - `DEPLOYMENT.md` - end-to-end deployment and demo checklist
 - `ARCHITECTURE.md` - production-demo architecture explanation
+- `INVESTOR_BRIEF.md` - positioning, scalability, defensibility, and cost narrative
+- `SUBSCRIPTION_MODEL.md` - tiering, usage limits, and feature gating model
+- `PRODUCT_READINESS.md` - hardening summary (stability, prompts, UX polish)
 
 ## 👥 User Roles
 

@@ -1,0 +1,702 @@
+/**
+ * Landing Page Advanced Animations & Effects
+ * Optional CSS utilities for enhanced visual effects
+ * 
+ * Add to your global CSS or tailwind.config.ts
+ */
+
+/* ============================================
+   FLOATING & LEVITATION EFFECTS
+   ============================================ */
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes floatSlow {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes floatFast {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-30px);
+  }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-float-slow {
+  animation: floatSlow 4s ease-in-out infinite;
+}
+
+.animate-float-fast {
+  animation: floatFast 2s ease-in-out infinite;
+}
+
+/* ============================================
+   GLOW EFFECTS
+   ============================================ */
+
+@keyframes glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(59, 130, 246, 0.8);
+  }
+}
+
+@keyframes glowPulse {
+  0% {
+    box-shadow: 0 0 0px rgba(59, 130, 246, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(59, 130, 246, 0.4);
+  }
+  100% {
+    box-shadow: 0 0 0px rgba(59, 130, 246, 0.7);
+  }
+}
+
+.animate-glow {
+  animation: glow 2s ease-in-out infinite;
+}
+
+.animate-glow-pulse {
+  animation: glowPulse 2s ease-in-out infinite;
+}
+
+/* ============================================
+   SHIMMER & SHINE EFFECTS
+   ============================================ */
+
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+@keyframes shine {
+  0% {
+    background-position: 200% center;
+  }
+  100% {
+    background-position: -200% center;
+  }
+}
+
+.animate-shimmer {
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite;
+}
+
+.animate-shine {
+  background-size: 200% auto;
+  animation: shine 3s linear infinite;
+}
+
+/* ============================================
+   GRADIENT ANIMATIONS
+   ============================================ */
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes gradientBlink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.animate-gradient-shift {
+  background-size: 200% 200%;
+  animation: gradientShift 3s ease infinite;
+}
+
+.animate-gradient-blink {
+  animation: gradientBlink 2s ease-in-out infinite;
+}
+
+/* ============================================
+   SLIDE & SLIDE-IN EFFECTS
+   ============================================ */
+
+@keyframes slideInUp {
+  from {
+    transform: translateY(100px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInDown {
+  from {
+    transform: translateY(-100px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in-up {
+  animation: slideInUp 0.6s ease-out;
+}
+
+.animate-slide-in-down {
+  animation: slideInDown 0.6s ease-out;
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.6s ease-out;
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.6s ease-out;
+}
+
+/* ============================================
+   SPIN & ROTATE EFFECTS
+   ============================================ */
+
+@keyframes spinSlow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes spinReverse {
+  from {
+    transform: rotate(360deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes wobble {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-5deg);
+  }
+  75% {
+    transform: rotate(5deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spinSlow 4s linear infinite;
+}
+
+.animate-spin-reverse {
+  animation: spinReverse 3s linear infinite;
+}
+
+.animate-wobble {
+  animation: wobble 0.8s ease-in-out infinite;
+}
+
+/* ============================================
+   BOUNCE & ELASTIC EFFECTS
+   ============================================ */
+
+@keyframes bounceSmall {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes bounceMedium {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes bounceEnter {
+  0% {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-bounce-small {
+  animation: bounceSmall 1.5s ease-in-out infinite;
+}
+
+.animate-bounce-medium {
+  animation: bounceMedium 1.5s ease-in-out infinite;
+}
+
+.animate-bounce-enter {
+  animation: bounceEnter 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ============================================
+   BLUR & FOCUS EFFECTS
+   ============================================ */
+
+@keyframes blurIn {
+  from {
+    filter: blur(10px);
+    opacity: 0;
+  }
+  to {
+    filter: blur(0px);
+    opacity: 1;
+  }
+}
+
+@keyframes blurOut {
+  from {
+    filter: blur(0px);
+    opacity: 1;
+  }
+  to {
+    filter: blur(10px);
+    opacity: 0;
+  }
+}
+
+.animate-blur-in {
+  animation: blurIn 0.8s ease-out;
+}
+
+.animate-blur-out {
+  animation: blurOut 0.8s ease-out;
+}
+
+/* ============================================
+   SCALE & ZOOM EFFECTS
+   ============================================ */
+
+@keyframes scaleUp {
+  from {
+    transform: scale(0.9);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+@keyframes scaleDown {
+  from {
+    transform: scale(1.1);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+@keyframes scalePulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.animate-scale-up {
+  animation: scaleUp 0.5s ease-out;
+}
+
+.animate-scale-down {
+  animation: scaleDown 0.5s ease-out;
+}
+
+.animate-scale-pulse {
+  animation: scalePulse 2s ease-in-out infinite;
+}
+
+/* ============================================
+   TEXT EFFECTS
+   ============================================ */
+
+@keyframes textGlow {
+  0%, 100% {
+    text-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+  }
+  50% {
+    text-shadow: 0 0 20px rgba(59, 130, 246, 0.8), 0 0 40px rgba(59, 130, 246, 0.4);
+  }
+}
+
+@keyframes typewriter {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+@keyframes blink {
+  0%, 49%, 100% {
+    opacity: 1;
+  }
+  50%, 99% {
+    opacity: 0;
+  }
+}
+
+.animate-text-glow {
+  animation: textGlow 2s ease-in-out infinite;
+}
+
+.animate-typewriter {
+  animation: typewriter 4s steps(40, end), blink 0.75s step-end infinite;
+  white-space: nowrap;
+  overflow: hidden;
+  border-right: 3px solid;
+}
+
+/* ============================================
+   PARALLAX EFFECTS
+   ============================================ */
+
+@keyframes parallaxUp {
+  0% {
+    transform: translateY(100px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes parallaxDown {
+  0% {
+    transform: translateY(-50px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+.animate-parallax-up {
+  animation: parallaxUp 1s ease-out;
+}
+
+.animate-parallax-down {
+  animation: parallaxDown 1s ease-out;
+}
+
+/* ============================================
+   ADVANCED GRADIENT EFFECTS
+   ============================================ */
+
+@keyframes gradientFlow {
+  0% {
+    background-position: 0% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+.gradient-flow {
+  background-size: 200% auto;
+  animation: gradientFlow 4s linear infinite;
+}
+
+/* ============================================
+   HOVER STATE UTILITIES
+   ============================================ */
+
+.group-hover\:scale-110:is(.group:hover *) {
+  transform: scale(1.1);
+}
+
+.group-hover\:glow-blue:is(.group:hover *) {
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.6);
+}
+
+/* ============================================
+   COMBO ANIMATIONS
+   ============================================ */
+
+/* Fade In + Slide Up */
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-slide-up {
+  animation: fadeSlideUp 0.8s ease-out;
+}
+
+/* Fade In + Scale */
+@keyframes fadeScale {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fade-scale {
+  animation: fadeScale 0.6s ease-out;
+}
+
+/* ============================================
+   STAGGER ANIMATIONS
+   ============================================ */
+
+.stagger-animation {
+  animation: fadeSlideUp 0.8s ease-out backwards;
+}
+
+.stagger-animation:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.stagger-animation:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.stagger-animation:nth-child(3) {
+  animation-delay: 0.2s;
+}
+
+.stagger-animation:nth-child(4) {
+  animation-delay: 0.3s;
+}
+
+.stagger-animation:nth-child(5) {
+  animation-delay: 0.4s;
+}
+
+.stagger-animation:nth-child(6) {
+  animation-delay: 0.5s;
+}
+
+/* ============================================
+   UTILITY TIMING CLASSES
+   ============================================ */
+
+.animation-duration-1 {
+  animation-duration: 1s;
+}
+
+.animation-duration-2 {
+  animation-duration: 2s;
+}
+
+.animation-duration-3 {
+  animation-duration: 3s;
+}
+
+.animation-timing-linear {
+  animation-timing-function: linear;
+}
+
+.animation-timing-ease {
+  animation-timing-function: ease;
+}
+
+.animation-timing-bounce {
+  animation-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ============================================
+   TRANSFORM UTILITIES
+   ============================================ */
+
+.transition-smooth {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.transition-smooth-slow {
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.transition-smooth-fast {
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* GPU Acceleration */
+.gpu-accelerated {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* ============================================
+   EFFECT PRESETS
+   ============================================ */
+
+/* Entrance Effects */
+.effect-entrance-fade {
+  animation: fadeSlideUp 0.8s ease-out;
+}
+
+.effect-entrance-bounce {
+  animation: bounceEnter 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.effect-entrance-zoom {
+  animation: scaleUp 0.5s ease-out;
+}
+
+/* Hover Effects */
+.effect-hover-lift {
+  transition: all 0.3s ease;
+}
+
+.effect-hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.effect-hover-glow:hover {
+  box-shadow: 0 0 30px rgba(59, 130, 246, 0.4);
+}
+
+/* Attention Getters */
+.effect-pulse-attention {
+  animation: scalePulse 0.8s ease-in-out infinite;
+}
+
+.effect-blink-attention {
+  animation: gradientBlink 0.6s ease-in-out infinite;
+}
+
+/* ============================================
+   RESPONSIVE ANIMATION TIMING
+   ============================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Reduce animation complexity on mobile */
+  .animate-float {
+    animation: float 4s ease-in-out infinite;
+  }
+
+  .animate-glow-pulse {
+    display: none;
+  }
+}
+
+/* ============================================
+   CUSTOM TAILWIND CONFIG TEMPLATE
+   ============================================ */
+
+/*
+Add this to your tailwind.config.ts for better integration:
+
+export default {
+  theme: {
+    extend: {
+      animation: {
+        'float': 'float 3s ease-in-out infinite',
+        'float-slow': 'floatSlow 4s ease-in-out infinite',
+        'glow': 'glow 2s ease-in-out infinite',
+        'shimmer': 'shimmer 2s infinite',
+        'slide-in-up': 'slideInUp 0.6s ease-out',
+        'slide-in-down': 'slideInDown 0.6s ease-out',
+        'bounce-enter': 'bounceEnter 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)',
+        'scale-pulse': 'scalePulse 2s ease-in-out infinite',
+        'text-glow': 'textGlow 2s ease-in-out infinite',
+        'fade-slide-up': 'fadeSlideUp 0.8s ease-out',
+        'fade-scale': 'fadeScale 0.6s ease-out',
+      },
+      keyframes: {
+        float: { /* ... */ },
+        glow: { /* ... */ },
+        // ... all keyframes here
+      }
+    }
+  }
+}
+*/
