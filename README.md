@@ -15,7 +15,7 @@ The system operates deterministically with full explainability, ensuring student
 ### 1. **Student Assessment Engine**
 - Tracks accuracy, speed, confidence, and mistake patterns
 - Computes per-concept mastery scores (0-100)
-- Real-time performance tracking
+- Real-time performance tracking  
  
 ### 2. **Syllabus Knowledge Graph**
 - Directed acyclic graph (DAG) of topics and prerequisites
