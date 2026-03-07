@@ -746,6 +746,231 @@
             color: var(--dim);
         }
 
+        /* Analytics Cards */
+        .analytics-section {
+            position: relative;
+            padding: 120px 56px;
+            z-index: 10;
+        }
+
+        .analytics-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .analytics-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            opacity: 0;
+            transform: translateY(40px);
+        }
+
+        .analytics-cards.visible {
+            animation: fadeInUp 0.8s ease forwards;
+        }
+
+        .analytics-card {
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 24px;
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .analytics-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(185, 255, 75, 0.2);
+        }
+
+        .analytics-badge {
+            display: inline-block;
+            padding: 6px 14px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            border-radius: 20px;
+            margin-bottom: 20px;
+        }
+
+        .analytics-badge.analytics {
+            background: rgba(45, 156, 255, 0.15);
+            color: var(--blue);
+            border: 1px solid rgba(45, 156, 255, 0.3);
+        }
+
+        .analytics-badge.memory {
+            background: rgba(255, 201, 60, 0.15);
+            color: var(--gold);
+            border: 1px solid rgba(255, 201, 60, 0.3);
+        }
+
+        .analytics-badge.streak {
+            background: rgba(255, 45, 107, 0.15);
+            color: var(--pink);
+            border: 1px solid rgba(255, 45, 107, 0.3);
+        }
+
+        .analytics-card-title {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--white);
+            margin-bottom: 12px;
+        }
+
+        .analytics-card-desc {
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--dim);
+            margin-bottom: 30px;
+        }
+
+        .analytics-visual {
+            position: relative;
+            height: 150px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+        }
+
+        /* Progress Chart */
+        .progress-chart {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .chart-line {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 80px;
+        }
+
+        .chart-path {
+            stroke: var(--gold);
+            stroke-width: 2;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            animation: drawLine 2s ease forwards;
+        }
+
+        @keyframes drawLine {
+            from {
+                stroke-dasharray: 1000;
+                stroke-dashoffset: 1000;
+            }
+            to {
+                stroke-dasharray: 1000;
+                stroke-dashoffset: 0;
+            }
+        }
+
+        /* Heatmap Grid */
+        .heatmap-grid {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 6px;
+            width: 100%;
+        }
+
+        .heatmap-cell {
+            aspect-ratio: 1;
+            background: rgba(185, 255, 75, 0.1);
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            animation: cellPop 0.4s ease backwards;
+        }
+
+        .heatmap-cell.active {
+            background: var(--lime);
+        }
+
+        .heatmap-cell.medium {
+            background: rgba(185, 255, 75, 0.5);
+        }
+
+        .heatmap-cell.low {
+            background: rgba(185, 255, 75, 0.2);
+        }
+
+        .heatmap-cell.today {
+            background: var(--pink);
+            box-shadow: 0 0 20px rgba(255, 45, 107, 0.5);
+        }
+
+        @keyframes cellPop {
+            from {
+                transform: scale(0);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* Generate staggered delays for cells */
+        .heatmap-cell:nth-child(1) { animation-delay: 0.05s; }
+        .heatmap-cell:nth-child(2) { animation-delay: 0.1s; }
+        .heatmap-cell:nth-child(3) { animation-delay: 0.15s; }
+        .heatmap-cell:nth-child(4) { animation-delay: 0.2s; }
+        .heatmap-cell:nth-child(5) { animation-delay: 0.25s; }
+        .heatmap-cell:nth-child(6) { animation-delay: 0.3s; }
+        .heatmap-cell:nth-child(7) { animation-delay: 0.35s; }
+        .heatmap-cell:nth-child(8) { animation-delay: 0.4s; }
+        .heatmap-cell:nth-child(9) { animation-delay: 0.45s; }
+        .heatmap-cell:nth-child(10) { animation-delay: 0.5s; }
+
+        /* Streak Display */
+        .streak-display {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+
+        .streak-number {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 72px;
+            color: var(--lime);
+            line-height: 1;
+            margin-bottom: 8px;
+            animation: countUp 1s ease forwards;
+        }
+
+        .streak-icon {
+            font-size: 48px;
+            animation: flameFlicker 1.5s ease-in-out infinite;
+        }
+
+        @keyframes flameFlicker {
+            0%, 100% {
+                transform: scale(1) translateY(0);
+                filter: brightness(1);
+            }
+            50% {
+                transform: scale(1.1) translateY(-5px);
+                filter: brightness(1.2);
+            }
+        }
+
+        .streak-label {
+            font-size: 12px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--dim);
+            margin-top: 8px;
+        }
+
         /* Responsive */
         @media (max-width: 1024px) {
             .hero-content {
@@ -812,6 +1037,23 @@
 
             .feature-card-title {
                 font-size: 24px;
+            }
+
+            .analytics-section {
+                padding: 80px 24px;
+            }
+
+            .analytics-cards {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .analytics-card {
+                padding: 30px;
+            }
+
+            .analytics-card-title {
+                font-size: 20px;
             }
         }
     </style>
@@ -994,6 +1236,106 @@
         </div>
     </section>
 
+    <!-- Analytics Section -->
+    <section class="analytics-section">
+        <div class="analytics-container">
+            <div class="analytics-cards">
+                <!-- Progress Over Time Card -->
+                <div class="analytics-card">
+                    <span class="analytics-badge analytics">Analytics</span>
+                    <h3 class="analytics-card-title">Progress Over Time</h3>
+                    <p class="analytics-card-desc">Track growth session by session.</p>
+                    <div class="analytics-visual">
+                        <div class="progress-chart">
+                            <svg class="chart-line" viewBox="0 0 300 80" preserveAspectRatio="none">
+                                <path class="chart-path" d="M 0,60 Q 30,55 60,50 T 120,35 T 180,30 T 240,20 T 300,15" />
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Study Heatmap Card -->
+                <div class="analytics-card">
+                    <span class="analytics-badge memory">Memory</span>
+                    <h3 class="analytics-card-title">Study Heatmap</h3>
+                    <p class="analytics-card-desc">See your consistency at a glance.</p>
+                    <div class="analytics-visual">
+                        <div class="heatmap-grid">
+                            <div class="heatmap-cell active"></div>
+                            <div class="heatmap-cell active"></div>
+                            <div class="heatmap-cell medium"></div>
+                            <div class="heatmap-cell active"></div>
+                            <div class="heatmap-cell active"></div>
+                            <div class="heatmap-cell medium"></div>
+                            <div class="heatmap-cell medium"></div>
+                            <div class="heatmap-cell active"></div>
+                            <div class="heatmap-cell active"></div>
+                            <div class="heatmap-cell active"></div>
+                            
+                            <div class="heatmap-cell active"></div>
+                            <div class="heatmap-cell active"></div>
+                            <div class="heatmap-cell active"></div>
+                            <div class="heatmap-cell low"></div>
+                            <div class="heatmap-cell active"></div>
+                            <div class="heatmap-cell medium"></div>
+                            <div class="heatmap-cell active"></div>
+                            <div class="heatmap-cell active"></div>
+                            <div class="heatmap-cell medium"></div>
+                            <div class="heatmap-cell active"></div>
+                            
+                            <div class="heatmap-cell medium"></div>
+                            <div class="heatmap-cell active"></div>
+                            <div class="heatmap-cell active"></div>
+                            <div class="heatmap-cell active"></div>
+                            <div class="heatmap-cell low"></div>
+                            <div class="heatmap-cell medium"></div>
+                            <div class="heatmap-cell active"></div>
+                            <div class="heatmap-cell active"></div>
+                            <div class="heatmap-cell active"></div>
+                            <div class="heatmap-cell active"></div>
+                            
+                            <div class="heatmap-cell active"></div>
+                            <div class="heatmap-cell medium"></div>
+                            <div class="heatmap-cell active"></div>
+                            <div class="heatmap-cell active"></div>
+                            <div class="heatmap-cell active"></div>
+                            <div class="heatmap-cell today"></div>
+                            <div class="heatmap-cell active"></div>
+                            <div class="heatmap-cell active"></div>
+                            <div class="heatmap-cell active"></div>
+                            <div class="heatmap-cell active"></div>
+                            
+                            <div class="heatmap-cell active"></div>
+                            <div class="heatmap-cell active"></div>
+                            <div class="heatmap-cell medium"></div>
+                            <div class="heatmap-cell active"></div>
+                            <div class="heatmap-cell active"></div>
+                            <div class="heatmap-cell active"></div>
+                            <div class="heatmap-cell active"></div>
+                            <div class="heatmap-cell active"></div>
+                            <div class="heatmap-cell medium"></div>
+                            <div class="heatmap-cell active"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Keep Momentum Card -->
+                <div class="analytics-card">
+                    <span class="analytics-badge streak">Streak</span>
+                    <h3 class="analytics-card-title">Keep Momentum</h3>
+                    <p class="analytics-card-desc">Streaks that push you to keep going.</p>
+                    <div class="analytics-visual">
+                        <div class="streak-display">
+                            <div class="streak-number">28</div>
+                            <div class="streak-icon">🔥</div>
+                            <div class="streak-label">Days in a row</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <script>
         // Loader
         const loadText = 'LOADING';
@@ -1067,7 +1409,7 @@
 
         // Observe elements for scroll animations
         window.addEventListener('load', () => {
-            const animatedElements = document.querySelectorAll('.feature-tag, .features-label, .features-title, .cta-buttons, .feature-cards');
+            const animatedElements = document.querySelectorAll('.feature-tag, .features-label, .features-title, .cta-buttons, .feature-cards, .analytics-cards');
             animatedElements.forEach(el => observer.observe(el));
         });
     </script>
