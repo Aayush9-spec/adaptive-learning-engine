@@ -4,6 +4,7 @@ import re
 import hashlib
 import time
 from datetime import datetime
+from decimal import Decimal
 
 import boto3
 from boto3.dynamodb.conditions import Key
@@ -151,33 +152,89 @@ def invoke_bedrock_text(user_id, prompt, max_tokens, subscription_tier="free"):
         )
         raise UsageLimitExceeded("Upgrade plan to continue")
 
-    body = {
-        "anthropic_version": "bedrock-2023-05-31",
-        "messages": [
-            {
-                "role": "user",
-                "content": [{"type": "text", "text": prompt}],
+    # Support both Claude and Nova models
+    if "anthropic.claude" in BEDROCK_MODEL_ID:
+        # Claude API format
+        body = {
+            "anthropic_version": "bedrock-2023-05-31",
+            "messages": [
+                {
+                    "role": "user",
+                    "content": [{"type": "text", "text": prompt}],
+                }
+            ],
+            "max_tokens": max_tokens,
+        }
+    else:
+        # Nova/Titan API format
+        body = {
+            "messages": [
+                {
+                    "role": "user",
+                    "content": [{"text": prompt}],
+                }
+            ],
+            "inferenceConfig": {
+                "max_new_tokens": max_tokens,
+                "temperature": 0.7,
             }
-        ],
-        "max_tokens": max_tokens,
-    }
-    response = bedrock.invoke_model(modelId=BEDROCK_MODEL_ID, body=json.dumps(body))
-    result = json.loads(response["body"].read())
-    content = result.get("content", [])
-    if content and isinstance(content, list):
+        }
+    
+    try:
+        response = bedrock.invoke_model(modelId=BEDROCK_MODEL_ID, body=json.dumps(body))
+        result = json.loads(response["body"].read())
+        
+        # Parse response based on model type
+        if "anthropic.claude" in BEDROCK_MODEL_ID:
+            content = result.get("content", [])
+            if content and isinstance(content, list):
+                text = content[0].get("text", "").strip()
+            else:
+                text = ""
+        else:
+            # Nova/Titan response format
+            output = result.get("output", {})
+            message = output.get("message", {})
+            content = message.get("content", [])
+            if content and isinstance(content, list):
+                text = content[0].get("text", "").strip()
+            else:
+                text = ""
+        
+        if text:
+            log_event(
+                "info",
+                "bedrock_invoke_ok",
+                user_id=user_id,
+                tier=subscription_tier,
+                model=BEDROCK_MODEL_ID,
+                max_tokens=max_tokens,
+            )
+            return text
+        
+        log_event("warn", "bedrock_empty_response", user_id=user_id, tier=subscription_tier)
+        return ""
+    except Exception as error:
+        error_msg = str(error)
         log_event(
-            "info",
-            "bedrock_invoke_ok",
+            "error",
+            "bedrock_invoke_failed",
             user_id=user_id,
             tier=subscription_tier,
-            max_tokens=max_tokens,
+            model=BEDROCK_MODEL_ID,
+            error=error_msg,
         )
-        return content[0].get("text", "").strip()
-    log_event("warn", "bedrock_empty_response", user_id=user_id, tier=subscription_tier)
-    return ""
+        # Return empty string to trigger fallback logic
+        return ""
 
 
 def json_response(status_code, body):
+    # Convert Decimal to float for JSON serialization
+    def decimal_default(obj):
+        if isinstance(obj, Decimal):
+            return float(obj)
+        raise TypeError
+    
     return {
         "statusCode": status_code,
         "headers": {
@@ -186,7 +243,7 @@ def json_response(status_code, body):
             "Access-Control-Allow-Methods": "OPTIONS,POST",
             "Access-Control-Allow-Headers": "Content-Type,Authorization",
         },
-        "body": json.dumps(body),
+        "body": json.dumps(body, default=decimal_default),
     }
 
 
@@ -205,10 +262,8 @@ def calculate_priority(mastery, exam_weight, dependency_urgency):
     mastery = max(0, min(100, int(mastery)))
     exam_weight = max(1, min(10, int(exam_weight)))
     dependency_urgency = max(0, min(100, int(dependency_urgency)))
-    return round(
-        ((100 - mastery) * 0.6) + (exam_weight * 0.3) + (dependency_urgency * 0.1),
-        2,
-    )
+    priority = ((100 - mastery) * 0.6) + (exam_weight * 0.3) + (dependency_urgency * 0.1)
+    return Decimal(str(round(priority, 2)))
 
 
 def get_user_progress(user_id):
@@ -859,6 +914,76 @@ def lambda_handler(event, context):
         log_event("warn", "invalid_json_body", request_id=request_id, path=path)
         return json_response(400, {"error": "Invalid JSON body"})
 
+    # Public endpoints that don't require authentication
+    if path == "/register":
+        username = payload.get("username")
+        password = payload.get("password")
+        role = payload.get("role", "student")
+        grade = payload.get("grade")
+        
+        if not username or not password:
+            return json_response(400, {"error": "username and password are required"})
+        
+        # Generate user_id from username
+        user_id = username.lower().replace(" ", "_")
+        
+        # Check if user already exists
+        existing_user = users_table.get_item(Key={"user_id": user_id}).get("Item")
+        if existing_user:
+            return json_response(409, {"error": "User already exists"})
+        
+        # Create new user (in production, hash the password!)
+        users_table.put_item(
+            Item={
+                "user_id": user_id,
+                "username": username,
+                "password": password,  # WARNING: In production, use bcrypt or similar!
+                "role": role,
+                "grade": int(grade) if grade else None,
+                "subscription_tier": "free",
+                "created_at": datetime.utcnow().isoformat() + "Z"
+            }
+        )
+        
+        log_event("info", "user_registered", user_id=user_id, role=role)
+        return json_response(201, {
+            "user_id": user_id,
+            "username": username,
+            "role": role,
+            "grade": grade,
+            "message": "User registered successfully"
+        })
+    
+    if path == "/login":
+        username = payload.get("username")
+        password = payload.get("password")
+        
+        if not username or not password:
+            return json_response(400, {"error": "username and password are required"})
+        
+        # Generate user_id from username
+        user_id = username.lower().replace(" ", "_")
+        
+        # Get user from database
+        user = users_table.get_item(Key={"user_id": user_id}).get("Item")
+        if not user:
+            return json_response(401, {"error": "Invalid credentials"})
+        
+        # Check password (in production, use proper password hashing!)
+        if user.get("password") != password:
+            return json_response(401, {"error": "Invalid credentials"})
+        
+        log_event("info", "user_logged_in", user_id=user_id)
+        return json_response(200, {
+            "user_id": user_id,
+            "username": user.get("username"),
+            "role": user.get("role", "student"),
+            "grade": user.get("grade"),
+            "subscription_tier": user.get("subscription_tier", "free"),
+            "message": "Login successful"
+        })
+
+    # All other endpoints require user_id
     user_id = payload.get("user_id")
     if not user_id:
         log_event("warn", "missing_user_id", request_id=request_id, path=path)
@@ -1184,6 +1309,106 @@ def lambda_handler(event, context):
             Key={"user_id": user_id, "memory_type": memory_type}
         ).get("Item", {})
         return json_response(200, memory)
+
+    # General Q&A endpoint - handles any question
+    if path == "/ask":
+        question = payload.get("question")
+        if not question:
+            return json_response(400, {"error": "question is required"})
+        
+        # Build a general-purpose prompt for any question
+        prompt = (
+            "You are an expert AI tutor and technical educator.\n\n"
+            "Answer the following question clearly and comprehensively:\n\n"
+            f"Question: {question}\n\n"
+            "Provide a well-structured answer that includes:\n"
+            "1. A clear, concise explanation\n"
+            "2. Key concepts and definitions\n"
+            "3. Practical examples where applicable\n"
+            "4. Common misconceptions or pitfalls (if relevant)\n"
+            "5. Real-world applications (if relevant)\n\n"
+            "Keep the answer educational, accurate, and easy to understand.\n"
+            "Use simple language but maintain technical accuracy.\n"
+            "Format the response in clear paragraphs.\n"
+        )
+        
+        try:
+            answer = invoke_bedrock_text(
+                user_id=user_id,
+                prompt=prompt,
+                max_tokens=1000,
+                subscription_tier=subscription_tier,
+            )
+            
+            # If Bedrock returns empty (due to access issues), provide helpful fallback
+            if not answer:
+                answer = (
+                    "I'm currently unable to generate AI responses because AWS Bedrock model access needs to be configured. "
+                    "However, I can help you with:\n\n"
+                    "• Personalized learning recommendations based on your progress\n"
+                    "• Study plan generation\n"
+                    "• Performance analytics and insights\n"
+                    "• Progress tracking across concepts\n\n"
+                    "For your question about: " + question + "\n\n"
+                    "Please check the AWS Console to enable Bedrock model access, or use the other features available in the dashboard."
+                )
+            
+            return json_response(200, {
+                "question": question,
+                "answer": answer,
+                "timestamp": datetime.utcnow().isoformat() + "Z"
+            })
+        except UsageLimitExceeded:
+            return json_response(429, {"error": "Daily limit reached. Upgrade your plan to continue."})
+        except Exception as error:
+            log_event(
+                "error",
+                "ask_endpoint_failed",
+                request_id=request_id,
+                user_id=user_id,
+                question=question[:100],
+                message=str(error),
+            )
+            # Provide helpful fallback instead of error
+            return json_response(200, {
+                "question": question,
+                "answer": (
+                    "I'm currently unable to generate AI responses. "
+                    "This may be due to AWS Bedrock configuration. "
+                    "Please try using the other features like recommendations, study plans, and progress tracking."
+                ),
+                "timestamp": datetime.utcnow().isoformat() + "Z"
+            })
+
+    # Question API endpoints
+    if path.startswith("/api/questions/concept/"):
+        # GET /api/questions/concept/{concept_id}
+        concept_id = path.split("/")[-1]
+        try:
+            concept_id = int(concept_id)
+        except ValueError:
+            return json_response(400, {"error": "concept_id must be an integer"})
+        
+        # For now, return empty list - will be populated with actual questions later
+        return json_response(200, {
+            "concept_id": concept_id,
+            "count": 0,
+            "questions": []
+        })
+    
+    if path.startswith("/api/questions/") and path.count("/") == 3:
+        # GET /api/questions/{question_id}
+        question_id = path.split("/")[-1]
+        try:
+            question_id = int(question_id)
+        except ValueError:
+            return json_response(400, {"error": "question_id must be an integer"})
+        
+        # For now, return not found - will be populated with actual questions later
+        return json_response(404, {
+            "error": "Question not found",
+            "question_id": question_id
+        })
 
     log_event("warn", "invalid_route", request_id=request_id, user_id=user_id, path=path)
     return json_response(400, {"error": "Invalid route"})
