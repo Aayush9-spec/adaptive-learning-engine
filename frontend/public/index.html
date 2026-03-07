@@ -1278,6 +1278,160 @@
             color: var(--dim);
         }
 
+        /* CTA Section */
+        .cta-section {
+            position: relative;
+            min-height: 80vh;
+            padding: 120px 56px;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .cta-container {
+            max-width: 900px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .cta-box {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 32px;
+            padding: 80px 60px;
+            position: relative;
+            overflow: hidden;
+            opacity: 0;
+            transform: translateY(40px);
+        }
+
+        .cta-box.visible {
+            animation: fadeInUp 0.8s ease forwards;
+        }
+
+        .cta-box::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 50% 0%, rgba(185, 255, 75, 0.1), transparent 70%);
+            pointer-events: none;
+        }
+
+        .cta-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 80px;
+            line-height: 1;
+            letter-spacing: -0.02em;
+            margin-bottom: 16px;
+            position: relative;
+        }
+
+        .cta-title .highlight {
+            font-family: 'Playfair Display', serif;
+            font-style: italic;
+            font-weight: 400;
+            color: var(--lime);
+            font-size: 90px;
+        }
+
+        .cta-subtitle {
+            font-size: 16px;
+            color: var(--dim);
+            margin-bottom: 48px;
+            letter-spacing: 0.02em;
+        }
+
+        .cta-buttons-final {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .btn-cta-primary {
+            padding: 18px 48px;
+            background: var(--lime);
+            color: #000;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            border: none;
+            border-radius: 40px;
+            cursor: none;
+            transition: transform 0.2s, box-shadow 0.2s;
+            letter-spacing: 0.02em;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-cta-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 40px rgba(185, 255, 75, 0.5);
+        }
+
+        .btn-cta-secondary {
+            padding: 18px 40px;
+            background: transparent;
+            color: var(--white);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 16px;
+            font-weight: 600;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 40px;
+            cursor: none;
+            transition: all 0.2s;
+            letter-spacing: 0.02em;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .btn-cta-secondary:hover {
+            border-color: var(--white);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        /* Footer */
+        .footer {
+            position: relative;
+            padding: 40px 56px;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            z-index: 10;
+        }
+
+        .footer-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footer-text {
+            font-size: 13px;
+            color: var(--dim);
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 32px;
+        }
+
+        .footer-links a {
+            font-size: 13px;
+            color: var(--dim);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .footer-links a:hover {
+            color: var(--white);
+        }
+
         /* Responsive */
         @media (max-width: 1024px) {
             .hero-content {
@@ -1407,6 +1561,47 @@
 
             .testimonial-card {
                 padding: 30px;
+            }
+
+            .cta-section {
+                padding: 80px 24px;
+                min-height: 60vh;
+            }
+
+            .cta-box {
+                padding: 60px 30px;
+            }
+
+            .cta-title {
+                font-size: 50px;
+            }
+
+            .cta-title .highlight {
+                font-size: 60px;
+            }
+
+            .cta-buttons-final {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .btn-cta-primary, .btn-cta-secondary {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .footer {
+                padding: 30px 24px;
+            }
+
+            .footer-content {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
+
+            .footer-links {
+                gap: 20px;
             }
         }
     </style>
@@ -1806,6 +2001,41 @@
         </div>
     </section>
 
+    <!-- CTA Section -->
+    <section class="cta-section" id="cta">
+        <div class="cta-container">
+            <div class="cta-box">
+                <h2 class="cta-title">
+                    READY TO<br>
+                    <span class="highlight">learn smarter?</span>
+                </h2>
+                <p class="cta-subtitle">Free to start. No credit card. Just results.</p>
+                <div class="cta-buttons-final">
+                    <a href="/register" class="btn-cta-primary">
+                        Start for Free →
+                    </a>
+                    <a href="#how" class="btn-cta-secondary">
+                        Book a Demo
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-text">
+                © 2026 Adaptive Learning. Powered by Amazon Bedrock AI.
+            </div>
+            <div class="footer-links">
+                <a href="/privacy">Privacy</a>
+                <a href="/terms">Terms</a>
+                <a href="/contact">Contact</a>
+            </div>
+        </div>
+    </footer>
+
     <script>
         // Loader
         const loadText = 'LOADING';
@@ -1879,7 +2109,7 @@
 
         // Observe elements for scroll animations
         window.addEventListener('load', () => {
-            const animatedElements = document.querySelectorAll('.feature-tag, .features-label, .features-title, .cta-buttons, .feature-cards, .analytics-cards, .process-label, .process-title, .process-step, .testimonials-label, .testimonials-title, .testimonials-grid');
+            const animatedElements = document.querySelectorAll('.feature-tag, .features-label, .features-title, .cta-buttons, .feature-cards, .analytics-cards, .process-label, .process-title, .process-step, .testimonials-label, .testimonials-title, .testimonials-grid, .cta-box');
             animatedElements.forEach(el => observer.observe(el));
         });
     </script>
