@@ -32,23 +32,60 @@ export default function LoginPage() {
   }
 
   return (
-    <div style={{ 
-      minHeight: '100vh',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-      padding: '20px'
-    }}>
+    <>
+      {loading && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999
+        }}>
+          <div style={{
+            background: '#fff',
+            padding: '30px 40px',
+            borderRadius: '15px',
+            textAlign: 'center',
+            boxShadow: '0 10px 40px rgba(0, 0, 0, 0.3)'
+          }}>
+            <div style={{
+              width: '40px',
+              height: '40px',
+              border: '4px solid #f3f3f3',
+              borderTop: '4px solid #667eea',
+              borderRadius: '50%',
+              margin: '0 auto 15px',
+              animation: 'spin 1s linear infinite'
+            }} />
+            <p style={{ color: '#666', fontSize: '14px' }}>Signing in...</p>
+          </div>
+        </div>
+      )}
+      <style>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
       <div style={{ 
-        background: 'rgba(255, 255, 255, 0.95)',
-        backdropFilter: 'blur(10px)',
-        borderRadius: '20px',
-        padding: '40px',
-        width: '100%',
-        maxWidth: '400px',
-        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)'
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        padding: '20px'
       }}>
+        <div style={{ 
+          background: 'rgba(255, 255, 255, 0.95)',
+          backdropFilter: 'blur(10px)',
+          borderRadius: '20px',
+          padding: '40px',
+          width: '100%',
+          maxWidth: '400px',
+          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)'
+        }}>
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
           <div style={{
             width: '60px',
@@ -199,7 +236,8 @@ export default function LoginPage() {
             </Link>
           </p>
         </div>
+        </div>
       </div>
-    </div>
+    </>
   )
 }
