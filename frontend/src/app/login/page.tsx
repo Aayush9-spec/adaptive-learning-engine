@@ -16,19 +16,8 @@ export default function LoginPage() {
     setError('')
     setLoading(true)
 
-    // Validation
-    if (!username.trim()) {
-      setError('Username is required')
-      setLoading(false)
-      return
-    }
-    if (!password) {
-      setError('Password is required')
-      setLoading(false)
-      return
-    }
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters')
+    if (!username.trim() || !password) {
+      setError('Please fill in all fields')
       setLoading(false)
       return
     }
@@ -43,88 +32,128 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#03030a' }}>
+    <div style={{ 
+      minHeight: '100vh',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      padding: '20px'
+    }}>
       <div style={{ 
-        background: 'rgba(255, 255, 255, 0.03)',
-        backdropFilter: 'blur(20px)',
-        border: '1px solid rgba(255, 255, 255, 0.08)',
-        borderRadius: '24px',
-        padding: '48px',
+        background: 'rgba(255, 255, 255, 0.95)',
+        backdropFilter: 'blur(10px)',
+        borderRadius: '20px',
+        padding: '40px',
         width: '100%',
-        maxWidth: '480px',
-        margin: '0 auto'
+        maxWidth: '400px',
+        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)'
       }}>
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-2" style={{ color: '#eeeae3' }}>Welcome Back</h1>
-          <p style={{ color: '#555566' }}>Sign in to continue learning</p>
+        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+          <div style={{
+            width: '60px',
+            height: '60px',
+            background: '#f0f0f0',
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            margin: '0 auto 20px',
+            fontSize: '24px'
+          }}>
+            →
+          </div>
+          <h1 style={{ 
+            fontSize: '24px',
+            fontWeight: '600',
+            color: '#1a1a1a',
+            marginBottom: '8px'
+          }}>
+            Sign in
+          </h1>
+          <p style={{ 
+            fontSize: '14px',
+            color: '#666'
+          }}>
+            Welcome back to Adaptive Learning
+          </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit}>
           {error && (
             <div style={{ 
-              background: 'rgba(255, 45, 107, 0.1)',
-              border: '1px solid rgba(255, 45, 107, 0.3)',
-              color: '#ff2d6b',
-              padding: '12px 16px',
-              borderRadius: '12px'
+              background: '#fee',
+              border: '1px solid #fcc',
+              color: '#c33',
+              padding: '12px',
+              borderRadius: '8px',
+              fontSize: '14px',
+              marginBottom: '20px',
+              textAlign: 'center'
             }}>
               {error}
             </div>
           )}
 
-          <div>
-            <label htmlFor="username" className="block text-sm font-medium mb-2" style={{ color: '#eeeae3' }}>
-              Username
-            </label>
+          <div style={{ marginBottom: '16px' }}>
             <input
-              id="username"
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '12px 16px',
-                background: 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                borderRadius: '12px',
-                color: '#eeeae3',
-                fontSize: '14px',
-                outline: 'none',
-                transition: 'all 0.2s'
-              }}
-              onFocus={(e) => e.target.style.borderColor = '#b9ff4b'}
-              onBlur={(e) => e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)'}
-              placeholder="Enter your username"
+              placeholder="Username"
               disabled={loading}
               autoComplete="username"
+              style={{
+                width: '100%',
+                padding: '14px 16px',
+                background: '#f5f5f5',
+                border: '1px solid #e0e0e0',
+                borderRadius: '10px',
+                fontSize: '14px',
+                color: '#1a1a1a',
+                outline: 'none',
+                transition: 'all 0.2s',
+                boxSizing: 'border-box'
+              }}
+              onFocus={(e) => {
+                e.target.style.background = '#fff'
+                e.target.style.borderColor = '#667eea'
+              }}
+              onBlur={(e) => {
+                e.target.style.background = '#f5f5f5'
+                e.target.style.borderColor = '#e0e0e0'
+              }}
             />
           </div>
 
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium mb-2" style={{ color: '#eeeae3' }}>
-              Password
-            </label>
+          <div style={{ marginBottom: '24px' }}>
             <input
-              id="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '12px 16px',
-                background: 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                borderRadius: '12px',
-                color: '#eeeae3',
-                fontSize: '14px',
-                outline: 'none',
-                transition: 'all 0.2s'
-              }}
-              onFocus={(e) => e.target.style.borderColor = '#b9ff4b'}
-              onBlur={(e) => e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)'}
-              placeholder="Enter your password"
+              placeholder="Password"
               disabled={loading}
               autoComplete="current-password"
+              style={{
+                width: '100%',
+                padding: '14px 16px',
+                background: '#f5f5f5',
+                border: '1px solid #e0e0e0',
+                borderRadius: '10px',
+                fontSize: '14px',
+                color: '#1a1a1a',
+                outline: 'none',
+                transition: 'all 0.2s',
+                boxSizing: 'border-box'
+              }}
+              onFocus={(e) => {
+                e.target.style.background = '#fff'
+                e.target.style.borderColor = '#667eea'
+              }}
+              onBlur={(e) => {
+                e.target.style.background = '#f5f5f5'
+                e.target.style.borderColor = '#e0e0e0'
+              }}
             />
           </div>
 
@@ -133,28 +162,39 @@ export default function LoginPage() {
             disabled={loading}
             style={{
               width: '100%',
-              padding: '14px 24px',
-              background: loading ? '#555566' : '#b9ff4b',
-              color: '#000',
-              fontWeight: '700',
+              padding: '14px',
+              background: loading ? '#999' : '#2c3e50',
+              color: '#fff',
               border: 'none',
-              borderRadius: '40px',
-              fontSize: '14px',
+              borderRadius: '10px',
+              fontSize: '15px',
+              fontWeight: '600',
               cursor: loading ? 'not-allowed' : 'pointer',
               transition: 'all 0.2s',
-              opacity: loading ? 0.5 : 1
+              marginBottom: '20px'
             }}
-            onMouseEnter={(e) => !loading && (e.currentTarget.style.transform = 'translateY(-2px)')}
-            onMouseLeave={(e) => !loading && (e.currentTarget.style.transform = 'translateY(0)')}
+            onMouseEnter={(e) => {
+              if (!loading) e.currentTarget.style.background = '#1a252f'
+            }}
+            onMouseLeave={(e) => {
+              if (!loading) e.currentTarget.style.background = '#2c3e50'
+            }}
           >
-            {loading ? 'Signing in...' : 'Sign In'}
+            {loading ? 'Signing in...' : 'Get Started'}
           </button>
         </form>
 
-        <div className="mt-6 text-center">
-          <p className="text-sm" style={{ color: '#555566' }}>
+        <div style={{ textAlign: 'center' }}>
+          <p style={{ fontSize: '14px', color: '#666' }}>
             Don't have an account?{' '}
-            <Link href="/register" style={{ color: '#b9ff4b', fontWeight: '600', textDecoration: 'none' }}>
+            <Link 
+              href="/register" 
+              style={{ 
+                color: '#667eea',
+                fontWeight: '600',
+                textDecoration: 'none'
+              }}
+            >
               Sign up
             </Link>
           </p>
