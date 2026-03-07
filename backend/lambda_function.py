@@ -994,9 +994,33 @@ def lambda_handler(event, context):
     except Exception as error:
         log_event("error", "users_lookup_failed", request_id=request_id, user_id=user_id, path=path, message=str(error))
         return json_response(500, {"error": "User lookup failed"})
-    if not user:
+    
+    # Auto-create guest users for /ask endpoint
+    if not user and path == "/ask":
+        log_event("info", "auto_creating_guest_user", user_id=user_id)
+        try:
+            users_table.put_item(
+                Item={
+                    "user_id": user_id,
+                    "username": user_id,
+                    "role": "student",
+                    "subscription_tier": "free",
+                    "created_at": datetime.utcnow().isoformat() + "Z"
+                }
+            )
+            user = {
+                "user_id": user_id,
+                "username": user_id,
+                "role": "student",
+                "subscription_tier": "free"
+            }
+        except Exception as error:
+            log_event("error", "guest_user_creation_failed", user_id=user_id, error=str(error))
+            return json_response(500, {"error": "Failed to create guest user"})
+    elif not user:
         log_event("warn", "user_not_found", request_id=request_id, user_id=user_id, path=path)
         return json_response(404, {"error": f"User '{user_id}' not found"})
+    
     subscription_tier = normalize_tier(user.get("subscription_tier", "free"))
     log_event(
         "info",
