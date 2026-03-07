@@ -44,12 +44,15 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#03030a' }}>
-      <div className="max-w-md w-full" style={{ 
+      <div style={{ 
         background: 'rgba(255, 255, 255, 0.03)',
         backdropFilter: 'blur(20px)',
         border: '1px solid rgba(255, 255, 255, 0.08)',
         borderRadius: '24px',
-        padding: '48px'
+        padding: '48px',
+        width: '100%',
+        maxWidth: '480px',
+        margin: '0 auto'
       }}>
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold mb-2" style={{ color: '#eeeae3' }}>Welcome Back</h1>
