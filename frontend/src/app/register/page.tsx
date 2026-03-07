@@ -61,22 +61,34 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 to-secondary-50 px-4 py-8">
-      <div className="card max-w-md w-full">
+    <div className="min-h-screen flex items-center justify-center px-4 py-8" style={{ background: '#03030a' }}>
+      <div className="max-w-md w-full" style={{ 
+        background: 'rgba(255, 255, 255, 0.03)',
+        backdropFilter: 'blur(20px)',
+        border: '1px solid rgba(255, 255, 255, 0.08)',
+        borderRadius: '24px',
+        padding: '48px'
+      }}>
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Create Account</h1>
-          <p className="text-gray-600">Join us to start your learning journey</p>
+          <h1 className="text-3xl font-bold mb-2" style={{ color: '#eeeae3' }}>Create Account</h1>
+          <p style={{ color: '#555566' }}>Join us to start your learning journey</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+            <div style={{ 
+              background: 'rgba(255, 45, 107, 0.1)',
+              border: '1px solid rgba(255, 45, 107, 0.3)',
+              color: '#ff2d6b',
+              padding: '12px 16px',
+              borderRadius: '12px'
+            }}>
               {error}
             </div>
           )}
 
           <div>
-            <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="username" className="block text-sm font-medium mb-2" style={{ color: '#eeeae3' }}>
               Username
             </label>
             <input
@@ -84,7 +96,19 @@ export default function RegisterPage() {
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="input"
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                background: 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: '12px',
+                color: '#eeeae3',
+                fontSize: '14px',
+                outline: 'none',
+                transition: 'all 0.2s'
+              }}
+              onFocus={(e) => e.target.style.borderColor = '#b9ff4b'}
+              onBlur={(e) => e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)'}
               placeholder="Choose a username"
               disabled={loading}
               autoComplete="username"
@@ -92,7 +116,7 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="password" className="block text-sm font-medium mb-2" style={{ color: '#eeeae3' }}>
               Password
             </label>
             <input
@@ -100,7 +124,19 @@ export default function RegisterPage() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="input"
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                background: 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: '12px',
+                color: '#eeeae3',
+                fontSize: '14px',
+                outline: 'none',
+                transition: 'all 0.2s'
+              }}
+              onFocus={(e) => e.target.style.borderColor = '#b9ff4b'}
+              onBlur={(e) => e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)'}
               placeholder="Create a password"
               disabled={loading}
               autoComplete="new-password"
@@ -108,7 +144,7 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="confirmPassword" className="block text-sm font-medium mb-2" style={{ color: '#eeeae3' }}>
               Confirm Password
             </label>
             <input
@@ -116,7 +152,19 @@ export default function RegisterPage() {
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="input"
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                background: 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: '12px',
+                color: '#eeeae3',
+                fontSize: '14px',
+                outline: 'none',
+                transition: 'all 0.2s'
+              }}
+              onFocus={(e) => e.target.style.borderColor = '#b9ff4b'}
+              onBlur={(e) => e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)'}
               placeholder="Confirm your password"
               disabled={loading}
               autoComplete="new-password"
@@ -124,7 +172,7 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium mb-2" style={{ color: '#eeeae3' }}>
               I am a
             </label>
             <div className="flex gap-4">
@@ -137,8 +185,9 @@ export default function RegisterPage() {
                   onChange={(e) => setRole(e.target.value as 'student')}
                   disabled={loading}
                   className="w-4 h-4"
+                  style={{ accentColor: '#b9ff4b' }}
                 />
-                <span>Student</span>
+                <span style={{ color: '#eeeae3' }}>Student</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer min-h-tap-target">
                 <input
@@ -149,27 +198,40 @@ export default function RegisterPage() {
                   onChange={(e) => setRole(e.target.value as 'teacher')}
                   disabled={loading}
                   className="w-4 h-4"
+                  style={{ accentColor: '#b9ff4b' }}
                 />
-                <span>Teacher</span>
+                <span style={{ color: '#eeeae3' }}>Teacher</span>
               </label>
             </div>
           </div>
 
           {role === 'student' && (
             <div>
-              <label htmlFor="grade" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="grade" className="block text-sm font-medium mb-2" style={{ color: '#eeeae3' }}>
                 Grade
               </label>
               <select
                 id="grade"
                 value={grade}
                 onChange={(e) => setGrade(e.target.value)}
-                className="input"
+                style={{
+                  width: '100%',
+                  padding: '12px 16px',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '12px',
+                  color: '#eeeae3',
+                  fontSize: '14px',
+                  outline: 'none',
+                  transition: 'all 0.2s'
+                }}
+                onFocus={(e) => e.target.style.borderColor = '#b9ff4b'}
+                onBlur={(e) => e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)'}
                 disabled={loading}
               >
-                <option value="">Select your grade</option>
+                <option value="" style={{ background: '#03030a' }}>Select your grade</option>
                 {[6, 7, 8, 9, 10, 11, 12].map((g) => (
-                  <option key={g} value={g}>
+                  <option key={g} value={g} style={{ background: '#03030a' }}>
                     Grade {g}
                   </option>
                 ))}
@@ -180,16 +242,30 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{
+              width: '100%',
+              padding: '14px 24px',
+              background: loading ? '#555566' : '#b9ff4b',
+              color: '#000',
+              fontWeight: '700',
+              border: 'none',
+              borderRadius: '40px',
+              fontSize: '14px',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              transition: 'all 0.2s',
+              opacity: loading ? 0.5 : 1
+            }}
+            onMouseEnter={(e) => !loading && (e.currentTarget.style.transform = 'translateY(-2px)')}
+            onMouseLeave={(e) => !loading && (e.currentTarget.style.transform = 'translateY(0)')}
           >
             {loading ? 'Creating account...' : 'Create Account'}
           </button>
         </form>
 
         <div className="mt-6 text-center">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm" style={{ color: '#555566' }}>
             Already have an account?{' '}
-            <Link href="/login" className="text-primary-600 hover:text-primary-700 font-medium">
+            <Link href="/login" style={{ color: '#b9ff4b', fontWeight: '600', textDecoration: 'none' }}>
               Sign in
             </Link>
           </p>

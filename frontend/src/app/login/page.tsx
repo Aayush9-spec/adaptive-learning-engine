@@ -43,22 +43,34 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 to-secondary-50 px-4">
-      <div className="card max-w-md w-full">
+    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#03030a' }}>
+      <div className="max-w-md w-full" style={{ 
+        background: 'rgba(255, 255, 255, 0.03)',
+        backdropFilter: 'blur(20px)',
+        border: '1px solid rgba(255, 255, 255, 0.08)',
+        borderRadius: '24px',
+        padding: '48px'
+      }}>
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h1>
-          <p className="text-gray-600">Sign in to continue learning</p>
+          <h1 className="text-3xl font-bold mb-2" style={{ color: '#eeeae3' }}>Welcome Back</h1>
+          <p style={{ color: '#555566' }}>Sign in to continue learning</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+            <div style={{ 
+              background: 'rgba(255, 45, 107, 0.1)',
+              border: '1px solid rgba(255, 45, 107, 0.3)',
+              color: '#ff2d6b',
+              padding: '12px 16px',
+              borderRadius: '12px'
+            }}>
               {error}
             </div>
           )}
 
           <div>
-            <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="username" className="block text-sm font-medium mb-2" style={{ color: '#eeeae3' }}>
               Username
             </label>
             <input
@@ -66,7 +78,19 @@ export default function LoginPage() {
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="input"
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                background: 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: '12px',
+                color: '#eeeae3',
+                fontSize: '14px',
+                outline: 'none',
+                transition: 'all 0.2s'
+              }}
+              onFocus={(e) => e.target.style.borderColor = '#b9ff4b'}
+              onBlur={(e) => e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)'}
               placeholder="Enter your username"
               disabled={loading}
               autoComplete="username"
@@ -74,7 +98,7 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="password" className="block text-sm font-medium mb-2" style={{ color: '#eeeae3' }}>
               Password
             </label>
             <input
@@ -82,7 +106,19 @@ export default function LoginPage() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="input"
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                background: 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: '12px',
+                color: '#eeeae3',
+                fontSize: '14px',
+                outline: 'none',
+                transition: 'all 0.2s'
+              }}
+              onFocus={(e) => e.target.style.borderColor = '#b9ff4b'}
+              onBlur={(e) => e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)'}
               placeholder="Enter your password"
               disabled={loading}
               autoComplete="current-password"
@@ -92,16 +128,30 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{
+              width: '100%',
+              padding: '14px 24px',
+              background: loading ? '#555566' : '#b9ff4b',
+              color: '#000',
+              fontWeight: '700',
+              border: 'none',
+              borderRadius: '40px',
+              fontSize: '14px',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              transition: 'all 0.2s',
+              opacity: loading ? 0.5 : 1
+            }}
+            onMouseEnter={(e) => !loading && (e.currentTarget.style.transform = 'translateY(-2px)')}
+            onMouseLeave={(e) => !loading && (e.currentTarget.style.transform = 'translateY(0)')}
           >
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
 
         <div className="mt-6 text-center">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm" style={{ color: '#555566' }}>
             Don't have an account?{' '}
-            <Link href="/register" className="text-primary-600 hover:text-primary-700 font-medium">
+            <Link href="/register" style={{ color: '#b9ff4b', fontWeight: '600', textDecoration: 'none' }}>
               Sign up
             </Link>
           </p>
