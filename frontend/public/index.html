@@ -1132,6 +1132,152 @@
             }
         }
 
+        /* Testimonials Section */
+        .testimonials-section {
+            position: relative;
+            min-height: 100vh;
+            padding: 120px 56px;
+            z-index: 10;
+        }
+
+        .testimonials-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .testimonials-label {
+            font-size: 11px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--lime);
+            margin-bottom: 24px;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .testimonials-label.visible {
+            animation: fadeInUp 0.6s ease forwards;
+        }
+
+        .testimonials-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 100px;
+            line-height: 0.9;
+            letter-spacing: -0.02em;
+            margin-bottom: 80px;
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        .testimonials-title.visible {
+            animation: fadeInUp 0.8s ease 0.2s forwards;
+        }
+
+        .testimonials-title .italic {
+            font-family: 'Playfair Display', serif;
+            font-style: italic;
+            font-weight: 400;
+            font-size: 90px;
+            color: var(--dim);
+        }
+
+        .testimonials-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            opacity: 0;
+            transform: translateY(40px);
+        }
+
+        .testimonials-grid.visible {
+            animation: fadeInUp 0.8s ease 0.4s forwards;
+        }
+
+        .testimonial-card {
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 24px;
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .testimonial-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(185, 255, 75, 0.2);
+        }
+
+        .testimonial-stars {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 24px;
+        }
+
+        .star {
+            color: var(--gold);
+            font-size: 16px;
+        }
+
+        .testimonial-text {
+            font-size: 16px;
+            line-height: 1.7;
+            color: var(--white);
+            font-style: italic;
+            margin-bottom: 32px;
+            min-height: 120px;
+        }
+
+        .testimonial-author {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .author-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .author-avatar.purple {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+        }
+
+        .author-avatar.orange {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: #fff;
+        }
+
+        .author-avatar.cyan {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: #fff;
+        }
+
+        .author-info {
+            flex: 1;
+        }
+
+        .author-name {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--white);
+            margin-bottom: 4px;
+        }
+
+        .author-role {
+            font-size: 13px;
+            color: var(--dim);
+        }
+
         /* Responsive */
         @media (max-width: 1024px) {
             .hero-content {
@@ -1240,6 +1386,27 @@
 
             .step-dot {
                 display: none;
+            }
+
+            .testimonials-section {
+                padding: 80px 24px;
+            }
+
+            .testimonials-title {
+                font-size: 60px;
+            }
+
+            .testimonials-title .italic {
+                font-size: 55px;
+            }
+
+            .testimonials-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .testimonial-card {
+                padding: 30px;
             }
         }
     </style>
@@ -1562,6 +1729,83 @@
         </div>
     </section>
 
+    <!-- Testimonials Section -->
+    <section class="testimonials-section" id="testimonials">
+        <div class="testimonials-container">
+            <div class="testimonials-label">— Student Stories</div>
+            
+            <h2 class="testimonials-title">
+                REAL PEOPLE,<br>
+                <span class="italic">real results</span>
+            </h2>
+
+            <div class="testimonials-grid">
+                <!-- Testimonial 1 -->
+                <div class="testimonial-card">
+                    <div class="testimonial-stars">
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                    </div>
+                    <p class="testimonial-text">
+                        "I failed my stats midterm. Three weeks later I aced the final. The AI found gaps I didn't even know existed."
+                    </p>
+                    <div class="testimonial-author">
+                        <div class="author-avatar purple">MK</div>
+                        <div class="author-info">
+                            <div class="author-name">Maya K.</div>
+                            <div class="author-role">College Junior</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Testimonial 2 -->
+                <div class="testimonial-card">
+                    <div class="testimonial-stars">
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                    </div>
+                    <p class="testimonial-text">
+                        "Felt like a private tutor available 24/7. My GRE verbal jumped 18 points in six weeks. Nothing else came close."
+                    </p>
+                    <div class="testimonial-author">
+                        <div class="author-avatar orange">JR</div>
+                        <div class="author-info">
+                            <div class="author-name">James R.</div>
+                            <div class="author-role">MBA Applicant</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Testimonial 3 -->
+                <div class="testimonial-card">
+                    <div class="testimonial-stars">
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                    </div>
+                    <p class="testimonial-text">
+                        "40% less study time, double the retention. The spaced repetition is borderline magic. I haven't forgotten a concept in months."
+                    </p>
+                    <div class="testimonial-author">
+                        <div class="author-avatar cyan">SL</div>
+                        <div class="author-info">
+                            <div class="author-name">Sofia L.</div>
+                            <div class="author-role">Med Student</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <script>
         // Loader
         const loadText = 'LOADING';
@@ -1635,7 +1879,7 @@
 
         // Observe elements for scroll animations
         window.addEventListener('load', () => {
-            const animatedElements = document.querySelectorAll('.feature-tag, .features-label, .features-title, .cta-buttons, .feature-cards, .analytics-cards, .process-label, .process-title, .process-step');
+            const animatedElements = document.querySelectorAll('.feature-tag, .features-label, .features-title, .cta-buttons, .feature-cards, .analytics-cards, .process-label, .process-title, .process-step, .testimonials-label, .testimonials-title, .testimonials-grid');
             animatedElements.forEach(el => observer.observe(el));
         });
     </script>
