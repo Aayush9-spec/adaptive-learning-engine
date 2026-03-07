@@ -403,6 +403,157 @@
             background: var(--gold);
         }
 
+        /* Features Section */
+        .features {
+            position: relative;
+            min-height: 100vh;
+            padding: 120px 56px;
+            z-index: 10;
+        }
+
+        .features-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .feature-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 40px;
+            margin-bottom: 80px;
+            justify-content: center;
+        }
+
+        .feature-tag {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 11px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--dim);
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 0.6s ease forwards;
+        }
+
+        .feature-tag.visible {
+            animation: fadeInUp 0.6s ease forwards;
+        }
+
+        .feature-tag:nth-child(1) { animation-delay: 0.1s; }
+        .feature-tag:nth-child(2) { animation-delay: 0.2s; }
+        .feature-tag:nth-child(3) { animation-delay: 0.3s; }
+        .feature-tag:nth-child(4) { animation-delay: 0.4s; }
+        .feature-tag:nth-child(5) { animation-delay: 0.5s; }
+        .feature-tag:nth-child(6) { animation-delay: 0.6s; }
+
+        .feature-tag-icon {
+            width: 4px;
+            height: 4px;
+            background: var(--lime);
+            border-radius: 50%;
+        }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .features-label {
+            font-size: 11px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--lime);
+            margin-bottom: 24px;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .features-label.visible {
+            animation: fadeInUp 0.6s ease 0.7s forwards;
+        }
+
+        .features-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 100px;
+            line-height: 0.9;
+            letter-spacing: -0.02em;
+            margin-bottom: 60px;
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        .features-title.visible {
+            animation: fadeInUp 0.8s ease 0.8s forwards;
+        }
+
+        .features-title .italic {
+            font-family: 'Playfair Display', serif;
+            font-style: italic;
+            font-weight: 400;
+            font-size: 90px;
+            color: var(--dim);
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 20px;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .cta-buttons.visible {
+            animation: fadeInUp 0.6s ease 1s forwards;
+        }
+
+        .btn-primary {
+            padding: 16px 40px;
+            background: var(--lime);
+            color: #000;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            border: none;
+            border-radius: 40px;
+            cursor: none;
+            transition: transform 0.2s, box-shadow 0.2s;
+            letter-spacing: 0.02em;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(185, 255, 75, 0.4);
+        }
+
+        .btn-secondary {
+            padding: 16px 40px;
+            background: transparent;
+            color: var(--white);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 40px;
+            cursor: none;
+            transition: all 0.2s;
+            letter-spacing: 0.02em;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--white);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
         /* Responsive */
         @media (max-width: 1024px) {
             .hero-content {
@@ -429,6 +580,32 @@
 
             .hero {
                 padding: 0 24px;
+            }
+
+            .features {
+                padding: 80px 24px;
+            }
+
+            .features-title {
+                font-size: 60px;
+            }
+
+            .features-title .italic {
+                font-size: 55px;
+            }
+
+            .feature-tags {
+                gap: 20px;
+            }
+
+            .cta-buttons {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .btn-primary, .btn-secondary {
+                width: 100%;
+                justify-content: center;
             }
         }
     </style>
@@ -525,6 +702,54 @@
         </div>
     </section>
 
+    <!-- Features Section -->
+    <section class="features" id="features">
+        <div class="features-container">
+            <div class="feature-tags">
+                <div class="feature-tag">
+                    <span class="feature-tag-icon"></span>
+                    <span>AWS Serverless</span>
+                </div>
+                <div class="feature-tag">
+                    <span class="feature-tag-icon"></span>
+                    <span>Bedrock AI</span>
+                </div>
+                <div class="feature-tag">
+                    <span class="feature-tag-icon"></span>
+                    <span>Smart Quizzes</span>
+                </div>
+                <div class="feature-tag">
+                    <span class="feature-tag-icon"></span>
+                    <span>Adaptive Paths</span>
+                </div>
+                <div class="feature-tag">
+                    <span class="feature-tag-icon"></span>
+                    <span>Real-Time Feedback</span>
+                </div>
+                <div class="feature-tag">
+                    <span class="feature-tag-icon"></span>
+                    <span>Knowledge Mapping</span>
+                </div>
+            </div>
+
+            <div class="features-label">— What We Offer</div>
+            
+            <h2 class="features-title">
+                EVERY FEATURE<br>
+                <span class="italic">crafted for you</span>
+            </h2>
+
+            <div class="cta-buttons">
+                <a href="/register" class="btn-primary">
+                    Start Free →
+                </a>
+                <a href="#how" class="btn-secondary">
+                    How it works
+                </a>
+            </div>
+        </div>
+    </section>
+
     <script>
         // Loader
         const loadText = 'LOADING';
@@ -581,6 +806,26 @@
                 }, 500);
             });
         }
+
+        // Scroll Animation Observer
+        const observerOptions = {
+            threshold: 0.2,
+            rootMargin: '0px 0px -100px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, observerOptions);
+
+        // Observe elements for scroll animations
+        window.addEventListener('load', () => {
+            const animatedElements = document.querySelectorAll('.feature-tag, .features-label, .features-title, .cta-buttons');
+            animatedElements.forEach(el => observer.observe(el));
+        });
     </script>
 </body>
 </html>
