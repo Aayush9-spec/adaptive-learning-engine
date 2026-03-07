@@ -421,5 +421,14 @@ For questions or issues:
 - Review the [API documentation](http://localhost:8000/docs) when running locally
 
 ---
+                                                                             **Built with ❤️ for students who want to study smarter, not harder.**                     
 
-**Built with ❤️ for students who want to study smarter, not harder.**
+
+
+
+
+
+
+
+
+    
