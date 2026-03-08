@@ -10,52 +10,24 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const { login, user, loading: authLoading } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
     // Redirect if already logged in
-    if (!authLoading && user) {
+    if (mounted && !authLoading && user) {
       router.push('/dashboard')
     }
-  }, [user, authLoading, router])
+  }, [user, authLoading, router, mounted])
 
-  // Show loading while checking auth
-  if (authLoading) {
-    return (
-      <div style={{ 
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-      }}>
-        <div style={{
-          background: 'rgba(255, 255, 255, 0.95)',
-          padding: '40px 50px',
-          borderRadius: '20px',
-          textAlign: 'center',
-          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)'
-        }}>
-          <div style={{
-            width: '50px',
-            height: '50px',
-            border: '5px solid #f3f3f3',
-            borderTop: '5px solid #667eea',
-            borderRadius: '50%',
-            margin: '0 auto 20px',
-            animation: 'spin 1s linear infinite'
-          }} />
-          <p style={{ color: '#666', fontSize: '16px', fontWeight: '600' }}>Loading...</p>
-        </div>
-        <style>{`
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-        `}</style>
-      </div>
-    )
+  // Don't render anything until mounted (client-side only)
+  if (!mounted || authLoading) {
+    return null
   }
 
   const handleSubmit = async (e: FormEvent) => {
