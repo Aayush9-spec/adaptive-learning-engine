@@ -11,15 +11,20 @@ export default function RegisterPage() {
   const [isNotRobot, setIsNotRobot] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const { register, user, loading: authLoading } = useAuth()
+  const [mounted, setMounted] = useState(false)
+  const { register, user } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
-    // Redirect if already logged in
-    if (!authLoading && user) {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    // Only redirect if user exists and component is mounted
+    if (mounted && user) {
       router.push('/dashboard')
     }
-  }, [user, authLoading, router])
+  }, [mounted, user, router])
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -40,15 +45,85 @@ export default function RegisterPage() {
 
     try {
       await register(username, password, 'student', undefined)
+      // Redirect happens in AuthContext after successful registration
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed')
-    } finally {
       setLoading(false)
     }
   }
 
-  const handleGoogleLogin = () => {
-    setError('Google login coming soon!')
+  const handleGoogleLogin = async () => {
+    try {
+      setLoading(true)
+      setError('')
+      
+      // Dynamically import and initialize Google Auth
+      const { initGoogleAuth, signInWithGoogle } = await import('@/lib/googleAuth')
+      
+      // Initialize Google Identity Services
+      await initGoogleAuth()
+      
+      // Trigger Google Sign-In
+      const { credential } = await signInWithGoogle()
+      
+      // Decode the JWT token to get user info
+      let googleUserInfo
+      try {
+        // JWT tokens have 3 parts separated by dots
+        const base64Url = credential.split('.')[1]
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
+        const jsonPayload = decodeURIComponent(
+          atob(base64)
+            .split('')
+            .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+            .join('')
+        )
+        googleUserInfo = JSON.parse(jsonPayload)
+      } catch (e) {
+        // If it's not a JWT, it might be already parsed user info
+        googleUserInfo = typeof credential === 'string' ? JSON.parse(credential) : credential
+      }
+      
+      // Send to backend
+      const API_URL = 'https://b3fw6ipszl.execute-api.us-east-1.amazonaws.com'
+      const response = await fetch(`${API_URL}/auth/google`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ google_user_info: googleUserInfo }),
+      })
+      
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Google signup failed')
+      }
+      
+      const data = await response.json()
+      const userData = {
+        id: data.user_id,
+        username: data.username,
+        role: data.role,
+        grade: data.grade,
+        subscription_tier: data.subscription_tier,
+        email: data.email,
+        picture: data.picture
+      }
+      
+      // Save to localStorage and redirect
+      localStorage.setItem('user', JSON.stringify(userData))
+      window.location.href = '/dashboard'
+      
+    } catch (err) {
+      console.error('Google signup error:', err)
+      setError(err instanceof Error ? err.message : 'Google signup failed. Please try again.')
+      setLoading(false)
+    }
+  }
+
+  // Don't render until mounted to avoid hydration issues
+  if (!mounted) {
+    return null
   }
 
   return (

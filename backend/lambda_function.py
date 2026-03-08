@@ -982,6 +982,80 @@ def lambda_handler(event, context):
             "subscription_tier": user.get("subscription_tier", "free"),
             "message": "Login successful"
         })
+    
+    if path == "/auth/google":
+        # Google OAuth login/signup
+        google_user_info = payload.get("google_user_info")
+        
+        if not google_user_info:
+            return json_response(400, {"error": "google_user_info is required"})
+        
+        email = google_user_info.get("email")
+        google_id = google_user_info.get("sub") or google_user_info.get("google_id")
+        name = google_user_info.get("name", "")
+        picture = google_user_info.get("picture", "")
+        
+        if not email or not google_id:
+            return json_response(400, {"error": "Invalid Google user info"})
+        
+        # Check if user exists by google_id
+        # Since DynamoDB doesn't support querying by non-key attributes easily,
+        # we'll use email as username for Google users
+        user_id = email.lower().replace("@", "_at_").replace(".", "_")
+        
+        # Try to get existing user
+        user = users_table.get_item(Key={"user_id": user_id}).get("Item")
+        
+        if user:
+            # Update google_id if not set
+            if not user.get("google_id"):
+                users_table.update_item(
+                    Key={"user_id": user_id},
+                    UpdateExpression="SET google_id = :gid, profile_picture = :pic",
+                    ExpressionAttributeValues={
+                        ":gid": google_id,
+                        ":pic": picture
+                    }
+                )
+            
+            log_event("info", "google_user_logged_in", user_id=user_id)
+            return json_response(200, {
+                "user_id": user_id,
+                "username": user.get("username", name),
+                "role": user.get("role", "student"),
+                "grade": user.get("grade"),
+                "subscription_tier": user.get("subscription_tier", "free"),
+                "email": email,
+                "picture": picture,
+                "message": "Login successful"
+            })
+        
+        # Create new user
+        username = name or email.split("@")[0]
+        users_table.put_item(
+            Item={
+                "user_id": user_id,
+                "username": username,
+                "password": "GOOGLE_AUTH",  # No password for Google users
+                "role": "student",
+                "google_id": google_id,
+                "profile_picture": picture,
+                "subscription_tier": "free",
+                "created_at": datetime.utcnow().isoformat() + "Z"
+            }
+        )
+        
+        log_event("info", "google_user_registered", user_id=user_id)
+        return json_response(201, {
+            "user_id": user_id,
+            "username": username,
+            "role": "student",
+            "grade": None,
+            "subscription_tier": "free",
+            "email": email,
+            "picture": picture,
+            "message": "User registered successfully"
+        })
 
     # All other endpoints require user_id
     user_id = payload.get("user_id")

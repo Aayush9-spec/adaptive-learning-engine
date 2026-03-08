@@ -77,11 +77,24 @@ For each question, provide:
 Format each question clearly with numbers (1, 2, 3, etc.) and make sure the questions test understanding, not just memorization.`
 
       const response = await askAI(userId, prompt)
+      
+      // Debug: log the AI response
+      console.log('AI Response:', response.answer)
+      
       const parsedQuestions = parseAIQuestions(response.answer, numQuestions)
+      
+      // Debug: log parsed questions
+      console.log('Parsed Questions:', parsedQuestions)
       
       if (parsedQuestions.length === 0) {
         setError('Failed to generate questions. Please try again.')
         return
+      }
+      
+      // Check if questions have valid text
+      const invalidQuestions = parsedQuestions.filter(q => !q.question || q.question.length < 10)
+      if (invalidQuestions.length > 0) {
+        console.warn('Some questions may not have been parsed correctly:', invalidQuestions)
       }
       
       setQuestions(parsedQuestions)
@@ -100,73 +113,108 @@ Format each question clearly with numbers (1, 2, 3, etc.) and make sure the ques
 
   const parseAIQuestions = (aiResponse: string, count: number): Question[] => {
     const questions: Question[] = []
-    const lines = aiResponse.split('\n').filter(line => line.trim())
     
-    // Simple parsing - create questions based on the response
-    for (let i = 0; i < count; i++) {
+    // Split response into sections by question numbers
+    const sections = aiResponse.split(/(?=\d+[.:\)])/g).filter(s => s.trim())
+    
+    for (let i = 0; i < Math.min(count, sections.length); i++) {
+      const section = sections[i]
       const questionNum = i + 1
       
-      // Find question text (look for numbered patterns)
-      const questionPattern = new RegExp(`${questionNum}[.:\\)]\\s*(.+?)(?=\\n|$)`, 'i')
-      const questionMatch = aiResponse.match(questionPattern)
-      
+      // Extract question text - everything after the number until options or answer
+      let questionText = ''
+      const questionMatch = section.match(/^\d+[.:\)]\s*(.+?)(?=\n[A-D][.:\)]|\nA\)|\nAnswer|\nCorrect|$)/is)
       if (questionMatch) {
-        const questionText = questionMatch[1].trim()
-        
-        // Determine question type
-        let type: 'mcq' | 'true_false' | 'short_answer' = 'short_answer'
-        let options: string[] | undefined
-        let correctAnswer = 'Answer not found'
-        
-        // Check if it's MCQ (has A, B, C, D options)
-        const optionPattern = /[A-D][.:\\)]\s*(.+?)(?=\n[A-D][.:\\)]|\n\n|$)/gi
-        const optionMatches = [...aiResponse.matchAll(optionPattern)]
-        
-        if (optionMatches.length >= 4) {
-          type = 'mcq'
-          options = optionMatches.slice(0, 4).map(m => m[1].trim())
-          
-          // Find correct answer
-          const answerPattern = /(?:correct answer|answer)[:\s]+([A-D])/i
-          const answerMatch = aiResponse.match(answerPattern)
-          if (answerMatch) {
-            correctAnswer = answerMatch[1].toUpperCase()
-          }
-        } else if (questionText.toLowerCase().includes('true or false') || 
-                   questionText.toLowerCase().includes('t/f')) {
-          type = 'true_false'
-          const tfPattern = /(?:correct answer|answer)[:\s]+(true|false)/i
-          const tfMatch = aiResponse.match(tfPattern)
-          if (tfMatch) {
-            correctAnswer = tfMatch[1].toLowerCase()
-          }
-        }
-        
-        // Extract explanation
-        const explanationPattern = /(?:explanation|because|reason)[:\s]+(.+?)(?=\n\n|\d+[.:\\)]|$)/is
-        const explanationMatch = aiResponse.match(explanationPattern)
-        const explanation = explanationMatch ? explanationMatch[1].trim() : 'No explanation provided'
-        
-        questions.push({
-          id: i + 1,
-          question: questionText,
-          type,
-          options,
-          correctAnswer,
-          explanation,
-          difficulty
-        })
-      } else {
-        // Fallback: create a generic question
-        questions.push({
-          id: i + 1,
-          question: `Question ${i + 1} about ${topic}`,
-          type: 'short_answer',
-          correctAnswer: 'Sample answer',
-          explanation: 'This is a practice question',
-          difficulty
-        })
+        questionText = questionMatch[1].trim()
+        // Remove any trailing "Options:" or similar text
+        questionText = questionText.replace(/\n?(Options?|Choices?):?\s*$/i, '').trim()
       }
+      
+      // If no question text found, try to extract first line after number
+      if (!questionText) {
+        const lines = section.split('\n').filter(l => l.trim())
+        if (lines.length > 0) {
+          questionText = lines[0].replace(/^\d+[.:\)]\s*/, '').trim()
+        }
+      }
+      
+      // Fallback if still no question
+      if (!questionText) {
+        questionText = `What is the main concept related to ${topic}?`
+      }
+      
+      // Determine question type and extract options
+      let type: 'mcq' | 'true_false' | 'short_answer' = 'short_answer'
+      let options: string[] | undefined
+      let correctAnswer = 'A'
+      
+      // Check for MCQ options (A, B, C, D)
+      const optionMatches = section.match(/[A-D][.:\)]\s*([^\n]+)/gi)
+      if (optionMatches && optionMatches.length >= 4) {
+        type = 'mcq'
+        options = optionMatches.slice(0, 4).map(opt => 
+          opt.replace(/^[A-D][.:\)]\s*/i, '').trim()
+        )
+        
+        // Find correct answer
+        const answerMatch = section.match(/(?:correct answer|answer|correct)[:\s]*([A-D])/i)
+        if (answerMatch) {
+          correctAnswer = answerMatch[1].toUpperCase()
+        } else {
+          // Default to A if not found
+          correctAnswer = 'A'
+        }
+      } else if (questionText.toLowerCase().includes('true or false') || 
+                 questionText.toLowerCase().includes('true/false') ||
+                 section.toLowerCase().includes('true or false')) {
+        type = 'true_false'
+        const tfMatch = section.match(/(?:answer|correct)[:\s]*(true|false)/i)
+        if (tfMatch) {
+          correctAnswer = tfMatch[1].toLowerCase()
+        } else {
+          correctAnswer = 'true'
+        }
+      } else {
+        // Short answer - extract answer text
+        const answerMatch = section.match(/(?:answer|correct answer)[:\s]*([^\n]+)/i)
+        if (answerMatch) {
+          correctAnswer = answerMatch[1].trim()
+        } else {
+          correctAnswer = `Answer related to ${topic}`
+        }
+      }
+      
+      // Extract explanation
+      let explanation = 'This tests your understanding of the concept.'
+      const explanationMatch = section.match(/(?:explanation|because|reason|why)[:\s]*([^\n]+(?:\n(?![A-D][.:\)]|\d+[.:\)])[^\n]+)*)/is)
+      if (explanationMatch) {
+        explanation = explanationMatch[1].trim()
+        // Clean up explanation
+        explanation = explanation.replace(/\n+/g, ' ').trim()
+      }
+      
+      questions.push({
+        id: questionNum,
+        question: questionText,
+        type,
+        options,
+        correctAnswer,
+        explanation,
+        difficulty
+      })
+    }
+    
+    // If we didn't get enough questions, create fallback ones
+    while (questions.length < count) {
+      const num = questions.length + 1
+      questions.push({
+        id: num,
+        question: `Question ${num}: Explain a key concept about ${topic}`,
+        type: 'short_answer',
+        correctAnswer: `A detailed explanation about ${topic}`,
+        explanation: 'This question tests your understanding of the topic.',
+        difficulty
+      })
     }
     
     return questions.slice(0, count)

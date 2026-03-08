@@ -33,11 +33,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const checkAuth = async () => {
-    // Check if user is stored in localStorage
+    // Only check localStorage, don't redirect here
     const storedUser = localStorage.getItem('user')
     if (storedUser) {
       try {
-        setUser(JSON.parse(storedUser))
+        const userData = JSON.parse(storedUser)
+        // Validate the data structure
+        if (userData && userData.id && userData.username) {
+          setUser(userData)
+        } else {
+          // Invalid data, clear it
+          localStorage.removeItem('user')
+        }
       } catch (e) {
         localStorage.removeItem('user')
       }
