@@ -44,6 +44,16 @@ export default function RegisterPage() {
 
   return (
     <>
+      <style>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        body {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+          min-height: 100vh;
+        }
+      `}</style>
       {loading && (
         <div style={{
           position: 'fixed',
@@ -74,12 +84,6 @@ export default function RegisterPage() {
           </div>
         </div>
       )}
-      <style>{`
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-      `}</style>
       <div style={{ 
         minHeight: '100vh',
         display: 'flex',
