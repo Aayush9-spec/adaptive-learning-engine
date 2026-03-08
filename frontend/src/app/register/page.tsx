@@ -11,25 +11,15 @@ export default function RegisterPage() {
   const [isNotRobot, setIsNotRobot] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const [mounted, setMounted] = useState(false)
   const { register, user, loading: authLoading } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  useEffect(() => {
     // Redirect if already logged in
-    if (mounted && !authLoading && user) {
+    if (!authLoading && user) {
       router.push('/dashboard')
     }
-  }, [user, authLoading, router, mounted])
-
-  // Don't render anything until mounted (client-side only)
-  if (!mounted || authLoading) {
-    return null
-  }
+  }, [user, authLoading, router])
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
