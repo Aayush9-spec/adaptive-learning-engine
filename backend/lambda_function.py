@@ -3,11 +3,32 @@ import os
 import re
 import hashlib
 import time
+import secrets
+import base64
 from datetime import datetime
 from decimal import Decimal
 
 import boto3
 from boto3.dynamodb.conditions import Key
+
+# Password hashing functions (inline for Lambda)
+def hash_password(password: str) -> str:
+    """Hash password using PBKDF2-HMAC-SHA256"""
+    salt = secrets.token_bytes(32)
+    pwd_hash = hashlib.pbkdf2_hmac('sha256', password.encode('utf-8'), salt, 100000)
+    combined = salt + pwd_hash
+    return base64.b64encode(combined).decode('utf-8')
+
+def verify_password(password: str, stored_hash: str) -> bool:
+    """Verify password against stored hash"""
+    try:
+        combined = base64.b64decode(stored_hash.encode('utf-8'))
+        salt = combined[:32]
+        stored_pwd_hash = combined[32:]
+        pwd_hash = hashlib.pbkdf2_hmac('sha256', password.encode('utf-8'), salt, 100000)
+        return secrets.compare_digest(pwd_hash, stored_pwd_hash)
+    except:
+        return False
 
 dynamodb = boto3.resource("dynamodb")
 bedrock = boto3.client("bedrock-runtime")
@@ -24,6 +45,15 @@ USAGE_TABLE = os.environ.get("USAGE_TABLE", "UserUsage")
 BEDROCK_MODEL_ID = os.environ.get(
     "BEDROCK_MODEL_ID", "anthropic.claude-3-haiku-20240307-v1:0"
 )
+
+# Fallback models in order of preference
+FALLBACK_MODELS = [
+    "anthropic.claude-3-haiku-20240307-v1:0",
+    "anthropic.claude-3-sonnet-20240229-v1:0",
+    "amazon.nova-micro-v1:0",
+    "amazon.nova-lite-v1:0",
+    "amazon.titan-text-express-v1"
+]
 
 users_table = dynamodb.Table(USERS_TABLE)
 concepts_table = dynamodb.Table(CONCEPTS_TABLE)
@@ -152,80 +182,103 @@ def invoke_bedrock_text(user_id, prompt, max_tokens, subscription_tier="free"):
         )
         raise UsageLimitExceeded("Upgrade plan to continue")
 
-    # Support both Claude and Nova models
-    if "anthropic.claude" in BEDROCK_MODEL_ID:
-        # Claude API format
-        body = {
-            "anthropic_version": "bedrock-2023-05-31",
-            "messages": [
-                {
-                    "role": "user",
-                    "content": [{"type": "text", "text": prompt}],
-                }
-            ],
-            "max_tokens": max_tokens,
-        }
-    else:
-        # Nova/Titan API format
-        body = {
-            "messages": [
-                {
-                    "role": "user",
-                    "content": [{"text": prompt}],
-                }
-            ],
-            "inferenceConfig": {
-                "max_new_tokens": max_tokens,
-                "temperature": 0.7,
-            }
-        }
+    # Try models in order until one succeeds
+    models_to_try = [BEDROCK_MODEL_ID] + [m for m in FALLBACK_MODELS if m != BEDROCK_MODEL_ID]
     
-    try:
-        response = bedrock.invoke_model(modelId=BEDROCK_MODEL_ID, body=json.dumps(body))
-        result = json.loads(response["body"].read())
-        
-        # Parse response based on model type
-        if "anthropic.claude" in BEDROCK_MODEL_ID:
-            content = result.get("content", [])
-            if content and isinstance(content, list):
-                text = content[0].get("text", "").strip()
+    last_error = None
+    for model_id in models_to_try:
+        try:
+            # Support both Claude and Nova models
+            if "anthropic.claude" in model_id:
+                # Claude API format
+                body = {
+                    "anthropic_version": "bedrock-2023-05-31",
+                    "messages": [
+                        {
+                            "role": "user",
+                            "content": [{"type": "text", "text": prompt}],
+                        }
+                    ],
+                    "max_tokens": max_tokens,
+                }
             else:
-                text = ""
-        else:
-            # Nova/Titan response format
-            output = result.get("output", {})
-            message = output.get("message", {})
-            content = message.get("content", [])
-            if content and isinstance(content, list):
-                text = content[0].get("text", "").strip()
+                # Nova/Titan API format
+                body = {
+                    "messages": [
+                        {
+                            "role": "user",
+                            "content": [{"text": prompt}],
+                        }
+                    ],
+                    "inferenceConfig": {
+                        "max_new_tokens": max_tokens,
+                        "temperature": 0.7,
+                    }
+                }
+            
+            response = bedrock.invoke_model(modelId=model_id, body=json.dumps(body))
+            result = json.loads(response["body"].read())
+            
+            # Parse response based on model type
+            if "anthropic.claude" in model_id:
+                content = result.get("content", [])
+                if content and isinstance(content, list):
+                    text = content[0].get("text", "").strip()
+                else:
+                    text = ""
             else:
-                text = ""
-        
-        if text:
-            log_event(
-                "info",
-                "bedrock_invoke_ok",
-                user_id=user_id,
-                tier=subscription_tier,
-                model=BEDROCK_MODEL_ID,
-                max_tokens=max_tokens,
-            )
-            return text
-        
-        log_event("warn", "bedrock_empty_response", user_id=user_id, tier=subscription_tier)
-        return ""
-    except Exception as error:
-        error_msg = str(error)
-        log_event(
-            "error",
-            "bedrock_invoke_failed",
-            user_id=user_id,
-            tier=subscription_tier,
-            model=BEDROCK_MODEL_ID,
-            error=error_msg,
-        )
-        # Return empty string to trigger fallback logic
-        return ""
+                # Nova/Titan response format
+                output = result.get("output", {})
+                message = output.get("message", {})
+                content = message.get("content", [])
+                if content and isinstance(content, list):
+                    text = content[0].get("text", "").strip()
+                else:
+                    text = ""
+            
+            if text:
+                log_event(
+                    "info",
+                    "bedrock_invoke_ok",
+                    user_id=user_id,
+                    tier=subscription_tier,
+                    model=model_id,
+                    max_tokens=max_tokens,
+                    fallback_used=model_id != BEDROCK_MODEL_ID
+                )
+                return text
+            
+        except Exception as error:
+            error_msg = str(error)
+            last_error = error_msg
+            
+            # Check if it's a throttling/capacity error
+            if any(keyword in error_msg.lower() for keyword in ["throttling", "capacity", "traffic", "too many requests"]):
+                log_event(
+                    "warn",
+                    "bedrock_throttled_trying_fallback",
+                    user_id=user_id,
+                    tier=subscription_tier,
+                    model=model_id,
+                    error=error_msg[:200],
+                )
+                # Try next model
+                continue
+            else:
+                # Other error, log and try next model
+                log_event(
+                    "error",
+                    "bedrock_error_trying_fallback",
+                    user_id=user_id,
+                    tier=subscription_tier,
+                    model=model_id,
+                    error=error_msg[:200],
+                )
+                continue
+    
+    # All models failed
+    log_event("error", "all_bedrock_models_failed", user_id=user_id, tier=subscription_tier, last_error=str(last_error)[:200])
+    return "I apologize, but I'm experiencing high demand right now. Please try again in a moment."
 
 
 def json_response(status_code, body):
@@ -924,6 +977,10 @@ def lambda_handler(event, context):
         if not username or not password:
             return json_response(400, {"error": "username and password are required"})
         
+        # Validate password strength
+        if len(password) < 8:
+            return json_response(400, {"error": "Password must be at least 8 characters long"})
+        
         # Generate user_id from username
         user_id = username.lower().replace(" ", "_")
         
@@ -932,12 +989,15 @@ def lambda_handler(event, context):
         if existing_user:
             return json_response(409, {"error": "User already exists"})
         
-        # Create new user (in production, hash the password!)
+        # Hash the password securely
+        password_hash = hash_password(password)
+        
+        # Create new user
         users_table.put_item(
             Item={
                 "user_id": user_id,
                 "username": username,
-                "password": password,  # WARNING: In production, use bcrypt or similar!
+                "password": password_hash,  # Store hashed password
                 "role": role,
                 "grade": int(grade) if grade else None,
                 "subscription_tier": "free",
@@ -969,9 +1029,18 @@ def lambda_handler(event, context):
         if not user:
             return json_response(401, {"error": "Invalid credentials"})
         
-        # Check password (in production, use proper password hashing!)
-        if user.get("password") != password:
-            return json_response(401, {"error": "Invalid credentials"})
+        # Verify password using secure hash comparison
+        stored_password = user.get("password")
+        
+        # Check if password is hashed (new format) or plain text (old format)
+        if stored_password.startswith("demo") or len(stored_password) < 50:
+            # Plain text password (for demo accounts or old users)
+            if stored_password != password:
+                return json_response(401, {"error": "Invalid credentials"})
+        else:
+            # Hashed password (new secure format)
+            if not verify_password(password, stored_password):
+                return json_response(401, {"error": "Invalid credentials"})
         
         log_event("info", "user_logged_in", user_id=user_id)
         return json_response(200, {
