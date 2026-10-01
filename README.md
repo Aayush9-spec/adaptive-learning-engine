@@ -1,7 +1,7 @@
 # Adaptive Learning Decision Engine
 
 An offline-first AI system that provides intelligent, explainable study recommendations to students based on performance data, syllabus structure, and exam weightage.
-
+ 
 ## 🌐 Live Demo
 
 **Frontend Demo**: https://d3ctpm1r7o6k3m.cloudfront.net  
