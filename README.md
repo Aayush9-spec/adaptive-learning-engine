@@ -16,7 +16,7 @@ This is **NOT** a chatbot tutor. This is a **decision intelligence engine** that
 
 The system operates deterministically with full explainability, ensuring students understand exactly why each recommendation is made.
 
-## ✨ Key Features
+## ✨ Key Features 
 
 ### 1. **Student Assessment Engine**
 - Tracks accuracy, speed, confidence, and mistake patterns
