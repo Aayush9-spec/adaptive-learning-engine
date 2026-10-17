@@ -13,7 +13,7 @@ An offline-first AI system that provides intelligent, explainable study recommen
 This is **NOT** a chatbot tutor. This is a **decision intelligence engine** that answers:
 
 > "Given limited time, what topic should I study right now to maximize my exam score?"
-
+ 
 The system operates deterministically with full explainability, ensuring students understand exactly why each recommendation is made.
 
 ## ✨ Key Features 
