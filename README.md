@@ -9,7 +9,7 @@ An offline-first AI system that provides intelligent, explainable study recommen
 **Status**: ✅ Production Ready | 71/71 Tests Passing  
 
 ## 🎯 Overview
-    
+     
 This is **NOT** a chatbot tutor. This is a **decision intelligence engine** that answers:
 
 > "Given limited time, what topic should I study right now to maximize my exam score?"
