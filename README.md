@@ -23,7 +23,7 @@ The system operates deterministically with full explainability, ensuring student
 - Computes per-concept mastery scores (0-100)
 - Real-time performance tracking  
  
-### 2. **Syllabus Knowledge Graph**
+### 2. **Syllabus Knowledge Graph** 
 - Directed acyclic graph (DAG) of topics and prerequisites
 - Multi-level hierarchy: Subject → Chapter → Topic → Concept
 - Exam weightage and estimated study time per topic
