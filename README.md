@@ -28,7 +28,7 @@ The system operates deterministically with full explainability, ensuring student
 - Multi-level hierarchy: Subject → Chapter → Topic → Concept
 - Exam weightage and estimated study time per topic
 
-### 3. **Decision Intelligence Algorithm**
+### 3. **Decision Intelligence Algorithm** 
 Computes priority scores using: 
 ```
 Priority Score = (Exam Weightage × Importance) / 
