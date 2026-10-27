@@ -19,7 +19,7 @@ The system operates deterministically with full explainability, ensuring student
 ## ✨ Key Features 
  
 ### 1. **Student Assessment Engine**
-- Tracks accuracy, speed, confidence, and mistake patterns 
+- Tracks accuracy, speed, confidence, and mistake patterns   
 - Computes per-concept mastery scores (0-100)
 - Real-time performance tracking  
  
