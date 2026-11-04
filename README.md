@@ -8,7 +8,7 @@ An offline-first AI system that provides intelligent, explainable study recommen
 **API Endpoint**: https://b3fw6ipszl.execute-api.us-east-1.amazonaws.com   
 **Status**: ✅ Production Ready | 71/71 Tests Passing  
  
-## 🎯 Overview
+## 🎯 Overview 
      
 This is **NOT** a chatbot tutor. This is a **decision intelligence engine** that answers: 
 
