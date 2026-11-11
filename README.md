@@ -67,10 +67,10 @@ Study Trigonometric Identities because:
 ## 🏗️ Architecture
 
 ### Technology Stack
-
-**Frontend:**
+ 
+**Frontend:** 
 - Next.js 14 (React 18) with App Router
-- TailwindCSS for styling
+- TailwindCSS for styling 
 - Progressive Web App (PWA)
 - IndexedDB for offline storage
 
