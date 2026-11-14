@@ -5,7 +5,7 @@ An offline-first AI system that provides intelligent, explainable study recommen
 ## 🌐 Live Demo 
    
 **Frontend Demo**: https://d3ctpm1r7o6k3m.cloudfront.net   
-**API Endpoint**: https://b3fw6ipszl.execute-api.us-east-1.amazonaws.com   
+**API Endpoint**: https://b3fw6ipszl.execute-api.us-east-1.amazonaws.com    
 **Status**: ✅ Production Ready | 71/71 Tests Passing       
  
 ## 🎯 Overview 
@@ -80,12 +80,12 @@ Study Trigonometric Identities because:
 - Pydantic for validation
 - JWT authentication
 
-**Databases:**
+**Databases:** 
 - SQLite (local offline storage)
 - PostgreSQL 15 (cloud sync)
 
 **DevOps:**
-- Docker & Docker Compose
+- Docker & Docker Compose 
 - Nginx reverse proxy
 - Alembic migrations
 
